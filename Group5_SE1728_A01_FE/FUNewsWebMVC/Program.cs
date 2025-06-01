@@ -1,4 +1,5 @@
 using FUNewsWebMVC.Services;
+using FUNewsWebMVC.Services.Interfaces;
 using System.Net.Http.Headers;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -8,19 +9,17 @@ builder.Services.AddControllersWithViews();
 
 builder.Services.AddSession();
 
-builder.Services.AddScoped<CategoryService>();
-builder.Services.AddScoped<NewsArticleService>();
-builder.Services.AddScoped<TagService>();
-builder.Services.AddScoped<SystemAccountService>();
-builder.Services.AddScoped<AuthService>();
-
 builder.Services.AddHttpClient("ApiClient", client =>
 {
 	client.BaseAddress = new Uri(builder.Configuration["ApiSettings:BaseUrl"]);
 	client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+	client.Timeout = TimeSpan.FromSeconds(30);
 });
 
 builder.Services.AddHttpContextAccessor();
+
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IReportService, ReportService>();
 
 var app = builder.Build();
 

@@ -6,11 +6,13 @@ namespace FUNewsWebMVC.Services
 	{
 		protected readonly IHttpClientFactory _clientFactory;
 		protected readonly IHttpContextAccessor _contextAccessor;
+		private readonly IConfiguration _configuration;
 
 		public BaseService(IHttpClientFactory clientFactory, IHttpContextAccessor contextAccessor)
 		{
 			_clientFactory = clientFactory;
 			_contextAccessor = contextAccessor;
+			_configuration = contextAccessor.HttpContext.RequestServices.GetRequiredService<IConfiguration>();
 		}
 
 		protected HttpClient CreateAuthorizedClient()
@@ -22,6 +24,12 @@ namespace FUNewsWebMVC.Services
 				client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 			}
 			return client;
+		}
+
+		protected string GetApiBase()
+		{
+			var baseUrl = _configuration["ApiSettings:BaseUrl"];
+			return baseUrl!.Replace("/odata/", "/"); 
 		}
 	}
 }

@@ -5,6 +5,8 @@
     var isLoggedIn = HttpContextAccessor.HttpContext.Request.Cookies["Token"] != null;
     var userName = HttpContextAccessor.HttpContext.Request.Cookies["Name"];
     var userRole = HttpContextAccessor.HttpContext.Request.Cookies["Role"];
+    var isAdmin = userRole == "Admin";
+    var isStaff = userRole == "Staff";
 }
 
 <!DOCTYPE html>
@@ -12,7 +14,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - FUNewsWebMVC</title>
+    <title>@ViewData["Title"] - FU News Management</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/FUNewsWebMVC.styles.css" asp-append-version="true" />
