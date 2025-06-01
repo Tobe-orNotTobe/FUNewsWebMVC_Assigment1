@@ -4,15 +4,16 @@ using FUNewsWebMVC.Services;
 using FUNewsWebMVC.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using FUNewsWebMVC.Services.Interfaces;
 
 namespace FUNewsWebMVC.Controllers
 {
 	[AuthFilter]
 	public class CategoryController : Controller
 	{
-		private readonly CategoryService _service;
+		private readonly ICategoryService _service;
 
-		public CategoryController(CategoryService service)
+		public CategoryController(ICategoryService service)
 		{
 			_service = service;
 		}
@@ -93,17 +94,13 @@ namespace FUNewsWebMVC.Controllers
             if (category == null) return NotFound();
             return View(category);
         }
-        public async Task<IActionResult> Delete(int id)
-        {
-            var category = await _service.GetByIdAsync(id);
-            if (category == null) return NotFound();
-            return View(category);
-        }
 
+
+        [HttpPost]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             await _service.DeleteAsync(id);
-            return RedirectToAction("Index");
+            return Json(new { success = true });
         }
 
 

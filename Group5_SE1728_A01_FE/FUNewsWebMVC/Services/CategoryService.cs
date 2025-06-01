@@ -1,10 +1,11 @@
 ﻿using FUNewsWebMVC.Models;
+using FUNewsWebMVC.Services.Interfaces;
 using Newtonsoft.Json;
 
 namespace FUNewsWebMVC.Services
 {
-	public class CategoryService : BaseService
-	{
+	public class CategoryService : BaseService, ICategoryService
+    {
 		public CategoryService(IHttpClientFactory clientFactory, IHttpContextAccessor contextAccessor)
 			: base(clientFactory, contextAccessor) { }
 
@@ -53,7 +54,7 @@ namespace FUNewsWebMVC.Services
         public async Task DeleteAsync(int id)
         {
             var client = CreateAuthorizedClient();
-            var response = await client.DeleteAsync($"Categories/{id}");
+            var response = await client.DeleteAsync($"Categories({id})"); 
             response.EnsureSuccessStatusCode();
         }
     }
