@@ -1,19 +1,105 @@
-﻿@model List<Category>
+﻿@using FUNewsWebMVC.ViewModels
+@model CategoryListViewModel
+
+<button type="button" class="btn btn-success mb-3" id="createBtn">
+    Create New Category
+</button>
+
+
 
 <table class="table">
     <thead>
         <tr>
             <th>ID</th>
             <th>Tên danh mục</th>
+            <th>Action</th>
         </tr>
     </thead>
     <tbody>
-        @foreach (var item in Model)
+        @foreach (var item in Model.Categories)
         {
             <tr>
                 <td>@item.CategoryId</td>
                 <td>@item.CategoryName</td>
+                <td>
+                    <a href="javascript:void(0)" class="btn btn-link open-modal" data-url="@Url.Action("Detail", new { id = item.CategoryId })">Details</a> |
+                    <a href="javascript:void(0)" class="btn btn-link open-modal" data-url="@Url.Action("Edit", new { id = item.CategoryId })">Edit</a> |
+                    <a asp-action="Delete" asp-route-id="@item.CategoryId">Delete</a>
+                </td>
             </tr>
         }
     </tbody>
 </table>
+
+<!-- Modal -->
+<div class="modal fade" id="categoryModal" tabindex="-1" role="dialog" aria-labelledby="categoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="categoryModalLabel">Category</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Partial view loads here -->
+            </div>
+            <div class="modal-footer">
+                <button type="submit" form="categoryForm" class="btn btn-primary">Save</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div>
+    <ul class="pagination">
+        @for (var i = 1; i <= Model.TotalPages; i++)
+        {
+            <li class="page-item @(i == Model.PageIndex ? "active" : "")">
+                <a class="page-link" asp-action="Index" asp-route-pageIndex="@i">@i</a>
+            </li>
+        }
+    </ul>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('#createBtn').click(function () {
+                $.get('@Url.Action("Create")', function (data) {
+                    $('#modalBody').html(data);
+                    $('#categoryModal').modal('show');
+                });
+            });
+
+            $('.open-modal').click(function () {
+                const url = $(this).data('url');
+                $.get(url, function (data) {
+                    $('#modalBody').html(data);
+                    $('#categoryModal').modal('show');
+                });
+            });
+        });
+        $(document).on('submit', '#categoryForm', function (e) {
+            e.preventDefault();
+            var form = $(this);
+
+            $.ajax({
+                type: form.attr('method'),
+                url: form.attr('action'),
+                data: form.serialize(),
+                success: function (response) {
+                    if (response.success) {
+                        $('#categoryModal').modal('hide');
+                        location.reload(); // or update the table dynamically
+                    } else {
+                        $('#modalBody').html(response); // re-render form with validation errors
+                    }
+                },
+                error: function () {
+                    alert('An error occurred while saving the category.');
+                }
+            });
+        });
+
+    </script>
+}
