@@ -1,14 +1,12 @@
 ﻿using FUNewsWebMVC.Models;
-using FUNewsWebMVC.Services;
+using FUNewsWebMVC.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
-using System.Text;
 
 public class AuthController : Controller
 {
-	private readonly AuthService _authService;
+	private readonly IAuthService _authService;
 
-	public AuthController(AuthService authService)
+	public AuthController(IAuthService authService)
 	{
 		_authService = authService;
 	}
@@ -35,13 +33,14 @@ public class AuthController : Controller
 		var cookieOptions = new CookieOptions
 		{
 			HttpOnly = true,
-			Secure = true, // BẮT BUỘC dùng HTTPS để bật Secure
+			Secure = true, 
 			Expires = DateTimeOffset.Now.AddMinutes(30)
 		};
 
 		Response.Cookies.Append("Token", result.Token, cookieOptions);
 		Response.Cookies.Append("Role", result.RoleName, cookieOptions);
 		Response.Cookies.Append("Name", result.AccountName, cookieOptions);
+		Response.Cookies.Append("UserId", result.AccountId.ToString(), cookieOptions);
 
 		return RedirectToAction("Index", "Home");
 	}
