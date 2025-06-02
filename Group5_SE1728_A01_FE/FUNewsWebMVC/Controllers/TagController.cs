@@ -17,17 +17,17 @@ namespace FUNewsWebMVC.Controllers
 			_logger = logger ?? throw new ArgumentNullException(nameof(logger));
 		}
 
-		private bool IsStaffOrAdmin()
+		private bool IsStaff()
 		{
 			var role = Request.Cookies["Role"];
-			return role == "Staff" || role == "Admin";
+			return role == "Staff";
 		}
 
 		public async Task<IActionResult> Index(string searchTerm = "")
 		{
-			if (!IsStaffOrAdmin())
+			if (!IsStaff())
 			{
-				TempData["Error"] = "Access denied. Only Staff and Admin can manage tags.";
+				TempData["Error"] = "Access denied. Only Staff can manage tags.";
 				return RedirectToAction("Index", "Home");
 			}
 
@@ -63,7 +63,7 @@ namespace FUNewsWebMVC.Controllers
 		[HttpGet]
 		public async Task<IActionResult> Create()
 		{
-			if (!IsStaffOrAdmin())
+			if (!IsStaff())
 			{
 				return Forbid();
 			}
@@ -85,7 +85,7 @@ namespace FUNewsWebMVC.Controllers
 		[ValidateAntiForgeryToken]
 		public async Task<IActionResult> Create(Tag tag)
 		{
-			if (!IsStaffOrAdmin())
+			if (!IsStaff())
 			{
 				return Json(new { success = false, message = "Access denied." });
 			}
@@ -130,7 +130,7 @@ namespace FUNewsWebMVC.Controllers
 		[HttpGet]
 		public async Task<IActionResult> Edit(int id)
 		{
-			if (!IsStaffOrAdmin())
+			if (!IsStaff())
 			{
 				return Forbid();
 			}
@@ -157,7 +157,7 @@ namespace FUNewsWebMVC.Controllers
 		[ValidateAntiForgeryToken]
 		public async Task<IActionResult> Edit(Tag tag)
 		{
-			if (!IsStaffOrAdmin())
+			if (!IsStaff())
 			{
 				return Json(new { success = false, message = "Access denied." });
 			}
@@ -190,7 +190,7 @@ namespace FUNewsWebMVC.Controllers
 		[HttpPost]
 		public async Task<IActionResult> DeleteConfirmed(int id)
 		{
-			if (!IsStaffOrAdmin())
+			if (!IsStaff())
 			{
 				return Json(new { success = false, message = "Access denied." });
 			}

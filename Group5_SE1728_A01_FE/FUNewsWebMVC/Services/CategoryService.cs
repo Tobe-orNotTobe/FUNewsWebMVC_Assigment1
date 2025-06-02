@@ -83,18 +83,17 @@ namespace FUNewsWebMVC.Services
 
 				var client = CreateAuthorizedClient();
 
-				// Prepare the category for creation - ensure IsActive is properly set
 				var categoryToCreate = new
 				{
 					CategoryName = category.CategoryName?.Trim(),
 					CategoryDesciption = category.CategoryDesciption?.Trim(),
 					ParentCategoryId = category.ParentCategoryId,
-					IsActive = category.IsActive ?? true // ← Đảm bảo có giá trị mặc định
+					IsActive = category.IsActive ?? true 
 				};
 
 				var json = JsonConvert.SerializeObject(categoryToCreate, new JsonSerializerSettings
 				{
-					NullValueHandling = NullValueHandling.Include // ← Đổi thành Include để gửi cả null values
+					NullValueHandling = NullValueHandling.Include 
 				});
 
 				_logger.LogInformation($"Sending JSON: {json}");

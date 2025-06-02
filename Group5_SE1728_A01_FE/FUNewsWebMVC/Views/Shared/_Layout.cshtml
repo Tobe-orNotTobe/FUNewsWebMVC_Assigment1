@@ -44,18 +44,18 @@
                             </a>
                         </li>
 
+                        <!-- Public News Articles (no authentication required, only active articles) -->
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="NewsArticle" asp-action="Index">
+                                <i class="fas fa-newspaper me-1"></i>News Articles
+                            </a>
+                        </li>
+
                         @if (isLoggedIn)
                         {
-                            <!-- Public News Articles (for all authenticated users) -->
-                            <li class="nav-item">
-                                <a class="nav-link" asp-controller="NewsArticle" asp-action="Index">
-                                    <i class="fas fa-newspaper me-1"></i>News Articles
-                                </a>
-                            </li>
-
-                            @if (isStaff || isAdmin)
+                            @if (isStaff)
                             {
-                                <!-- Staff can manage Categories and Tags -->
+                                <!-- Staff-only can manage Categories and Tags -->
                                 <li class="nav-item">
                                     <a class="nav-link" asp-controller="Category" asp-action="Index">
                                         <i class="fas fa-folder me-1"></i>Categories
@@ -150,50 +150,50 @@
         </nav>
     </header>
 
-    <div class="container-fluid">
-        <main role="main" class="pb-3">
-            <!-- Alert Messages -->
-            @if (TempData["Success"] != null)
-            {
-                <div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
-                    <i class="fas fa-check-circle me-2"></i>
-                    @TempData["Success"]
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            }
+    <!-- Main content with proper spacing -->
+    <main role="main" class="pb-3">
+        <!-- Alert Messages -->
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
+                <i class="fas fa-check-circle me-2"></i>
+                @TempData["Success"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
 
-            @if (TempData["Error"] != null)
-            {
-                <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
-                    <i class="fas fa-exclamation-circle me-2"></i>
-                    @TempData["Error"]
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            }
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                @TempData["Error"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
 
-            @if (TempData["Warning"] != null)
-            {
-                <div class="alert alert-warning alert-dismissible fade show mt-3" role="alert">
-                    <i class="fas fa-exclamation-triangle me-2"></i>
-                    @TempData["Warning"]
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            }
+        @if (TempData["Warning"] != null)
+        {
+            <div class="alert alert-warning alert-dismissible fade show mt-3" role="alert">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                @TempData["Warning"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
 
-            @if (TempData["Info"] != null)
-            {
-                <div class="alert alert-info alert-dismissible fade show mt-3" role="alert">
-                    <i class="fas fa-info-circle me-2"></i>
-                    @TempData["Info"]
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            }
+        @if (TempData["Info"] != null)
+        {
+            <div class="alert alert-info alert-dismissible fade show mt-3" role="alert">
+                <i class="fas fa-info-circle me-2"></i>
+                @TempData["Info"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
 
-            @RenderBody()
-        </main>
-    </div>
+        @RenderBody()
+    </main>
 
-    <footer class="border-top footer text-muted mt-5 bg-light">
+    <!-- Fixed footer that doesn't overlap content -->
+    <footer class="footer bg-light">
         <div class="container py-3">
             <div class="row">
                 <div class="col-md-6">

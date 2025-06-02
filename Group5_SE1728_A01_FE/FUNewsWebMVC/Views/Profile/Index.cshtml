@@ -1,0 +1,281 @@
+﻿@model SystemAccount
+@{
+    ViewData["Title"] = "My Profile";
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2>
+                <i class="fas fa-user-circle me-2"></i>
+                My Profile
+            </h2>
+            <p class="text-muted mb-0">Manage your personal information</p>
+        </div>
+        <div>
+            <button type="button" class="btn btn-warning me-2" id="editProfileBtn">
+                <i class="fas fa-edit me-1"></i>
+                Edit Profile
+            </button>
+            <button type="button" class="btn btn-outline-secondary" id="changePasswordBtn">
+                <i class="fas fa-key me-1"></i>
+                Change Password
+            </button>
+        </div>
+    </div>
+
+    <!-- Profile Information Card -->
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Profile Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-sm-3">
+                            <strong>Account ID:</strong>
+                        </div>
+                        <div class="col-sm-9">
+                            <code>@Model.AccountId</code>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-3">
+                            <strong>Name:</strong>
+                        </div>
+                        <div class="col-sm-9">
+                            @Model.AccountName
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-3">
+                            <strong>Email:</strong>
+                        </div>
+                        <div class="col-sm-9">
+                            @Model.AccountEmail
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-3">
+                            <strong>Role:</strong>
+                        </div>
+                        <div class="col-sm-9">
+                            @switch (Model.AccountRole)
+                            {
+                                case 1:
+                                    <span class="badge bg-warning">Staff</span>
+                                    break;
+                                case 2:
+                                    <span class="badge bg-info">Lecturer</span>
+                                    break;
+                                default:
+                                    <span class="badge bg-secondary">Unknown</span>
+                                    break;
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-chart-bar me-2"></i>
+                        Account Statistics
+                    </h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.AccountRole == 1) // Staff
+                    {
+                        <div class="text-center mb-3">
+                            <div class="h4 mb-0 text-primary">
+                                @(Model.NewsArticles?.Count ?? 0)
+                            </div>
+                            <small class="text-muted">Articles Created</small>
+                        </div>
+                        <div class="text-center">
+                            <a asp-controller="NewsArticle" asp-action="Index" asp-route-filter="my-articles" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-newspaper me-1"></i>
+                                View My Articles
+                            </a>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center">
+                            <div class="text-muted">
+                                <i class="fas fa-graduation-cap fa-2x mb-2"></i>
+                                <p>Lecturer Account</p>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Profile Modal -->
+<div class="modal fade" id="profileModal" tabindex="-1" role="dialog" aria-labelledby="profileModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="profileModalLabel">Edit Profile</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Partial view loads here -->
+            </div>
+            <div class="modal-footer">
+                <button type="submit" form="profileForm" class="btn btn-primary">Save Changes</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Change Password Modal -->
+<div class="modal fade" id="passwordModal" tabindex="-1" role="dialog" aria-labelledby="passwordModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="passwordModalLabel">Change Password</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="passwordModalBody">
+                <!-- Partial view loads here -->
+            </div>
+            <div class="modal-footer">
+                <button type="submit" form="changePasswordForm" class="btn btn-primary">Change Password</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // Open Edit Profile modal
+            $('#editProfileBtn').click(function () {
+                showLoading();
+                $.get('@Url.Action("Edit")', function (data) {
+                    $('#modalBody').html(data);
+                    $('#profileModal').modal('show');
+                    hideLoading();
+                }).fail(function() {
+                    hideLoading();
+                    showAlert('danger', 'Failed to load edit form.');
+                });
+            });
+
+            // Open Change Password modal
+            $('#changePasswordBtn').click(function () {
+                showLoading();
+                $.get('@Url.Action("ChangePassword")', function (data) {
+                    $('#passwordModalBody').html(data);
+                    $('#passwordModal').modal('show');
+                    hideLoading();
+                }).fail(function() {
+                    hideLoading();
+                    showAlert('danger', 'Failed to load password change form.');
+                });
+            });
+
+            // Handle profile form submission
+            $(document).on('submit', '#profileForm', function (e) {
+                e.preventDefault();
+                var form = $(this);
+                showLoading();
+
+                $.ajax({
+                    type: form.attr('method'),
+                    url: form.attr('action'),
+                    data: form.serialize(),
+                    success: function (response) {
+                        hideLoading();
+                        if (response.success) {
+                            $('#profileModal').modal('hide');
+                            showAlert('success', 'Profile updated successfully!');
+                            setTimeout(() => location.reload(), 1500);
+                        } else {
+                            $('#modalBody').html(response);
+                        }
+                    },
+                    error: function () {
+                        hideLoading();
+                        showAlert('danger', 'An error occurred while updating profile.');
+                    }
+                });
+            });
+
+            // Handle password change form submission
+            $(document).on('submit', '#changePasswordForm', function (e) {
+                e.preventDefault();
+                var form = $(this);
+                showLoading();
+
+                $.ajax({
+                    type: form.attr('method'),
+                    url: form.attr('action'),
+                    data: form.serialize(),
+                    success: function (response) {
+                        hideLoading();
+                        if (response.success) {
+                            $('#passwordModal').modal('hide');
+                            showAlert('success', response.message || 'Password changed successfully!');
+                        } else {
+                            if (response.message) {
+                                showAlert('danger', response.message);
+                            } else {
+                                $('#passwordModalBody').html(response);
+                            }
+                        }
+                    },
+                    error: function () {
+                        hideLoading();
+                        showAlert('danger', 'An error occurred while changing password.');
+                    }
+                });
+            });
+        });
+
+        // Utility functions
+        function showLoading() {
+            if ($('#loadingSpinner').length === 0) {
+                $('body').append('<div id="loadingSpinner" class="position-fixed top-50 start-50 translate-middle" style="z-index: 9999;"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>');
+            }
+            $('#loadingSpinner').removeClass('d-none');
+        }
+
+        function hideLoading() {
+            $('#loadingSpinner').addClass('d-none');
+        }
+
+        function showAlert(type, message) {
+            const alertHtml = `
+                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'} me-2"></i>
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+
+            const container = document.querySelector('main');
+            container.insertAdjacentHTML('afterbegin', alertHtml);
+
+            setTimeout(() => {
+                const alert = container.querySelector('.alert');
+                if (alert) {
+                    const bsAlert = new bootstrap.Alert(alert);
+                    bsAlert.close();
+                }
+            }, 5000);
+        }
+    </script>
+}

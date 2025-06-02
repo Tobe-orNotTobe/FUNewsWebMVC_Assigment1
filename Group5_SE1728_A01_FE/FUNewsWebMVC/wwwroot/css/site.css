@@ -27,12 +27,34 @@ body {
     font-size: 1.5rem;
 }
 
+/* Footer - Fixed positioning issue */
+.footer {
+    position: static !important;
+    bottom: auto !important;
+    width: 100%;
+    margin-top: 60px;
+    border-top: 1px solid #e5e5e5;
+    background-color: #f8f9fa;
+    padding: 20px 0;
+}
+
+/* Main content spacing */
+main {
+    padding: 20px 15px 40px 15px;
+    margin-bottom: 30px;
+}
+
+.container-fluid {
+    margin-bottom: 30px;
+}
+
 /* Cards */
 .card {
     border: none;
     border-radius: var(--border-radius);
     box-shadow: var(--box-shadow);
     transition: all 0.3s ease;
+    margin-bottom: 20px;
 }
 
     .card:hover {
@@ -104,6 +126,11 @@ body {
     padding: 0.75rem;
     vertical-align: middle;
     border-top: 1px solid #dee2e6;
+}
+
+/* Table responsive with proper spacing */
+.table-responsive {
+    margin-bottom: 30px;
 }
 
 /* Forms */
@@ -184,17 +211,26 @@ body {
 }
 
 /* DataTables Styling */
-.dataTables_wrapper .dataTables_filter input {
-    border-radius: var(--border-radius);
-    border: 2px solid #e9ecef;
-    padding: 0.375rem 0.75rem;
-    margin-left: 0.5rem;
+.dataTables_wrapper {
+    margin-bottom: 30px;
 }
 
-.dataTables_wrapper .dataTables_length select {
-    border-radius: var(--border-radius);
-    border: 2px solid #e9ecef;
-    padding: 0.375rem 2rem 0.375rem 0.75rem;
+    .dataTables_wrapper .dataTables_filter input {
+        border-radius: var(--border-radius);
+        border: 2px solid #e9ecef;
+        padding: 0.375rem 0.75rem;
+        margin-left: 0.5rem;
+    }
+
+    .dataTables_wrapper .dataTables_length select {
+        border-radius: var(--border-radius);
+        border: 2px solid #e9ecef;
+        padding: 0.375rem 2rem 0.375rem 0.75rem;
+    }
+
+/* Pagination */
+.pagination {
+    margin-bottom: 30px;
 }
 
 .page-link {
@@ -239,6 +275,17 @@ body {
 
     .chart-container {
         height: 250px;
+    }
+
+    /* Mobile footer adjustments */
+    .footer {
+        margin-top: 40px;
+        padding: 15px 0;
+    }
+
+    main {
+        padding: 15px 10px 30px 10px;
+        margin-bottom: 20px;
     }
 }
 
@@ -316,5 +363,9 @@ body {
 
     .table {
         font-size: 12px;
+    }
+
+    .footer {
+        display: none !important;
     }
 }

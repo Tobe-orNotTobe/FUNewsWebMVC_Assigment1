@@ -29,7 +29,6 @@ public class AuthController : Controller
 			return View(model);
 		}
 
-		// ✅ Lưu vào cookie
 		var cookieOptions = new CookieOptions
 		{
 			HttpOnly = true,
@@ -40,7 +39,6 @@ public class AuthController : Controller
 		Response.Cookies.Append("Token", result.Token, cookieOptions);
 		Response.Cookies.Append("Role", result.RoleName, cookieOptions);
 		Response.Cookies.Append("Name", result.AccountName, cookieOptions);
-		Response.Cookies.Append("UserId", result.AccountId.ToString(), cookieOptions);
 
 		return RedirectToAction("Index", "Home");
 	}

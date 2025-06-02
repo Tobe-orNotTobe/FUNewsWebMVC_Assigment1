@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace FUNewsWebMVC.Controllers
 {
-	[AuthFilter]
 	public class NewsArticleController : Controller
 	{
 		private readonly INewsArticleService _newsService;
@@ -32,6 +31,11 @@ namespace FUNewsWebMVC.Controllers
 			return role == "Staff" || role == "Admin";
 		}
 
+		private bool IsAuthenticated()
+		{
+			return !string.IsNullOrEmpty(Request.Cookies["Token"]);
+		}
+
 		private short? GetCurrentUserId()
 		{
 			var userIdCookie = Request.Cookies["UserId"];
@@ -47,62 +51,75 @@ namespace FUNewsWebMVC.Controllers
 			return $"ART{DateTime.Now:yyyyMMdd}{DateTime.Now:HHmmss}{new Random().Next(10, 99)}";
 		}
 
-		// Index - Display all articles with search and filter
+		// PUBLIC ACCESS - No authentication required
 		public async Task<IActionResult> Index(string searchTerm = "", string filter = "", short? categoryId = null, string articleId = "")
 		{
 			try
 			{
-				_logger.LogInformation($"Loading news articles index with filter: {filter}, search: {searchTerm}");
+				_logger.LogInformation($"Loading news articles index with filter: {filter}, search: {searchTerm}, authenticated: {IsAuthenticated()}");
 
 				List<NewsArticle> articles = new List<NewsArticle>();
 
-				// Handle different filters
-				switch (filter.ToLower())
+				// Handle different filters based on authentication
+				if (IsAuthenticated() && IsStaffOrAdmin())
 				{
-					case "my-articles":
-						if (IsStaffOrAdmin())
-						{
+					// Authenticated staff/admin can see all articles and use filters
+					switch (filter.ToLower())
+					{
+						case "my-articles":
 							var userId = GetCurrentUserId();
 							if (userId.HasValue)
 							{
 								articles = await _newsService.GetMyArticlesAsync(userId.Value);
 							}
-						}
-						break;
-					case "active":
-						articles = await _newsService.GetActiveNewsArticlesAsync();
-						break;
-					default:
-						if (!string.IsNullOrEmpty(searchTerm))
-						{
-							articles = await _newsService.SearchNewsArticlesAsync(searchTerm);
-						}
-						else if (categoryId.HasValue)
-						{
-							articles = await _newsService.GetNewsArticlesByCategoryAsync(categoryId.Value);
-						}
-						else
-						{
-							articles = await _newsService.GetNewsArticlesAsync();
-						}
-						break;
+							break;
+						case "active":
+							articles = await _newsService.GetActiveNewsArticlesAsync();
+							break;
+						default:
+							if (!string.IsNullOrEmpty(searchTerm))
+							{
+								articles = await _newsService.SearchNewsArticlesAsync(searchTerm);
+							}
+							else if (categoryId.HasValue)
+							{
+								articles = await _newsService.GetNewsArticlesByCategoryAsync(categoryId.Value);
+							}
+							else
+							{
+								articles = await _newsService.GetNewsArticlesAsync();
+							}
+							break;
+					}
 				}
-
-				// Filter by status for non-authenticated users
-				var role = Request.Cookies["Role"];
-				if (string.IsNullOrEmpty(role))
+				else
 				{
-					articles = articles.Where(a => a.NewsStatus == true).ToList();
+					// Public access - only active articles
+					if (!string.IsNullOrEmpty(searchTerm))
+					{
+						var allArticles = await _newsService.SearchNewsArticlesAsync(searchTerm);
+						articles = allArticles.Where(a => a.NewsStatus == true).ToList();
+					}
+					else if (categoryId.HasValue)
+					{
+						var categoryArticles = await _newsService.GetNewsArticlesByCategoryAsync(categoryId.Value);
+						articles = categoryArticles.Where(a => a.NewsStatus == true).ToList();
+					}
+					else
+					{
+						articles = await _newsService.GetActiveNewsArticlesAsync();
+					}
 				}
 
 				ViewBag.SearchTerm = searchTerm;
 				ViewBag.Filter = filter;
 				ViewBag.CategoryId = categoryId;
-				ViewBag.ArticleId = articleId; // Pass articleId to view for auto-opening modal
+				ViewBag.ArticleId = articleId;
 				ViewBag.Categories = await _categoryService.GetCategoriesAsync();
 				ViewBag.Tags = await _tagService.GetTagsAsync();
 				ViewBag.CanManage = IsStaffOrAdmin();
 				ViewBag.IsMyArticles = filter.ToLower() == "my-articles";
+				ViewBag.IsAuthenticated = IsAuthenticated();
 
 				_logger.LogInformation($"Successfully loaded {articles.Count} articles");
 				return View(articles);
@@ -115,7 +132,7 @@ namespace FUNewsWebMVC.Controllers
 			}
 		}
 
-		// Details - Return partial view for modal popup only
+		// PUBLIC ACCESS - No authentication required for viewing details
 		public async Task<IActionResult> Details(string id)
 		{
 			if (string.IsNullOrEmpty(id))
@@ -133,15 +150,15 @@ namespace FUNewsWebMVC.Controllers
 					return Json(new { success = false, message = "Article not found." });
 				}
 
-				// Check if user can view inactive articles
-				if (article.NewsStatus != true && !IsStaffOrAdmin())
+				// Public users can only view active articles
+				if (!IsAuthenticated() && article.NewsStatus != true)
 				{
 					return Json(new { success = false, message = "Article not found." });
 				}
 
 				ViewBag.CanManage = IsStaffOrAdmin();
+				ViewBag.IsAuthenticated = IsAuthenticated();
 
-				// Always return partial view for modal popup
 				return PartialView("_ArticleDetails", article);
 			}
 			catch (Exception ex)
@@ -151,7 +168,8 @@ namespace FUNewsWebMVC.Controllers
 			}
 		}
 
-		// Create GET - Return partial view for modal
+		// AUTHENTICATION REQUIRED for management operations
+		[AuthFilter]
 		[HttpGet]
 		public async Task<IActionResult> Create()
 		{
@@ -184,7 +202,7 @@ namespace FUNewsWebMVC.Controllers
 			}
 		}
 
-		// Create POST - Handle form submission
+		[AuthFilter]
 		[HttpPost]
 		[ValidateAntiForgeryToken]
 		public async Task<IActionResult> Create(NewsArticle article, List<int> selectedTags, bool NewsStatus = false)
@@ -206,7 +224,7 @@ namespace FUNewsWebMVC.Controllers
 
 					article.CreatedById = userId.Value;
 					article.CreatedDate = DateTime.Now;
-					article.NewsStatus = NewsStatus; // Explicitly set from form parameter
+					article.NewsStatus = NewsStatus;
 
 					if (string.IsNullOrEmpty(article.NewsArticleId))
 					{
@@ -238,7 +256,7 @@ namespace FUNewsWebMVC.Controllers
 			return PartialView("_ArticleForm", article);
 		}
 
-		// Edit GET - Return partial view for modal
+		[AuthFilter]
 		[HttpGet]
 		public async Task<IActionResult> Edit(string id)
 		{
@@ -262,13 +280,11 @@ namespace FUNewsWebMVC.Controllers
 
 				ViewBag.Action = "Edit";
 
-				// Get categories for dropdown
 				var categories = await _categoryService.GetCategoriesAsync();
 				ViewBag.Categories = new SelectList(
 					categories.Where(c => c.IsActive == true),
 					"CategoryId", "CategoryName", article.CategoryId);
 
-				// Get all tags
 				ViewBag.Tags = await _tagService.GetTagsAsync();
 
 				return PartialView("_ArticleForm", article);
@@ -280,7 +296,7 @@ namespace FUNewsWebMVC.Controllers
 			}
 		}
 
-		// Edit POST - Handle form submission
+		[AuthFilter]
 		[HttpPost]
 		[ValidateAntiForgeryToken]
 		public async Task<IActionResult> Edit(NewsArticle article, List<int> selectedTags, bool NewsStatus = false)
@@ -290,7 +306,6 @@ namespace FUNewsWebMVC.Controllers
 				return Json(new { success = false, message = "Access denied." });
 			}
 
-			// Remove validation for fields that should not be validated in edit
 			ModelState.Remove("CreatedDate");
 			ModelState.Remove("CreatedById");
 
@@ -300,20 +315,18 @@ namespace FUNewsWebMVC.Controllers
 				{
 					var userId = GetCurrentUserId();
 
-					// Get the existing article to preserve certain fields
 					var existingArticle = await _newsService.GetNewsArticleByIdAsync(article.NewsArticleId);
 					if (existingArticle == null)
 					{
 						return Json(new { success = false, message = "Article not found." });
 					}
 
-					// Update only the editable fields
 					existingArticle.NewsTitle = article.NewsTitle;
 					existingArticle.Headline = article.Headline;
 					existingArticle.NewsContent = article.NewsContent;
 					existingArticle.NewsSource = article.NewsSource;
 					existingArticle.CategoryId = article.CategoryId;
-					existingArticle.NewsStatus = NewsStatus; // Explicitly set from form parameter
+					existingArticle.NewsStatus = NewsStatus;
 					existingArticle.UpdatedById = userId;
 					existingArticle.ModifiedDate = DateTime.Now;
 
@@ -336,7 +349,6 @@ namespace FUNewsWebMVC.Controllers
 				}
 			}
 
-			// If validation failed, return the form with errors
 			ViewBag.Action = "Edit";
 			var categories = await _categoryService.GetCategoriesAsync();
 			ViewBag.Categories = new SelectList(
@@ -346,7 +358,7 @@ namespace FUNewsWebMVC.Controllers
 			return PartialView("_ArticleForm", article);
 		}
 
-		// Delete POST - Handle deletion with confirmation
+		[AuthFilter]
 		[HttpPost]
 		public async Task<IActionResult> DeleteConfirmed(string id)
 		{
@@ -374,7 +386,7 @@ namespace FUNewsWebMVC.Controllers
 			}
 		}
 
-		// Get Article Data - For AJAX operations
+		[AuthFilter]
 		[HttpGet]
 		public async Task<IActionResult> GetArticleData(string id)
 		{

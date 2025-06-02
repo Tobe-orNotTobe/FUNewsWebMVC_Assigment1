@@ -261,7 +261,10 @@ namespace FUNewsWebMVC.Services
 
 				var client = CreateAuthorizedClient();
 				var encodedSearchTerm = Uri.EscapeDataString(searchTerm);
-				var response = await client.GetAsync($"NewsArticles/Search?searchTerm={encodedSearchTerm}&$expand=Category,CreatedBy,Tags");
+
+				var filterQuery = $"NewsArticles?$filter=contains(NewsTitle,'{encodedSearchTerm}') or contains(Headline,'{encodedSearchTerm}') or contains(NewsContent,'{encodedSearchTerm}')&$expand=Category,CreatedBy,Tags&$orderby=CreatedDate desc";
+
+				var response = await client.GetAsync(filterQuery);
 				response.EnsureSuccessStatusCode();
 
 				var content = await response.Content.ReadAsStringAsync();

@@ -1,0 +1,60 @@
+﻿@model SystemAccount
+
+@Html.AntiForgeryToken()
+
+<form id="profileForm" asp-action="Edit" method="post">
+    <input type="hidden" asp-for="AccountId" />
+    <input type="hidden" asp-for="AccountRole" />
+
+    <div class="form-group mb-3">
+        <label asp-for="AccountName" class="form-label">Full Name *</label>
+        <input asp-for="AccountName" class="form-control" maxlength="100" required />
+        <span asp-validation-for="AccountName" class="text-danger"></span>
+        <div class="form-text">Your full name as it will appear in the system</div>
+    </div>
+
+    <div class="form-group mb-3">
+        <label asp-for="AccountEmail" class="form-label">Email Address *</label>
+        <input asp-for="AccountEmail" class="form-control" type="email" maxlength="70" required />
+        <span asp-validation-for="AccountEmail" class="text-danger"></span>
+        <div class="form-text">Your email address for login and notifications</div>
+    </div>
+
+    <div class="form-group mb-3">
+        <label asp-for="AccountPassword" class="form-label">Password *</label>
+        <input asp-for="AccountPassword" class="form-control" type="password" maxlength="70" required />
+        <span asp-validation-for="AccountPassword" class="text-danger"></span>
+        <div class="form-text">Enter your current password or a new one (minimum 6 characters)</div>
+    </div>
+
+    <!-- Read-only fields -->
+    <div class="row mt-4 pt-3 border-top bg-light rounded p-3">
+        <div class="col-md-6">
+            <div class="mb-2">
+                <strong>Account ID:</strong>
+                <code>@Model.AccountId</code>
+            </div>
+            <div class="mb-2">
+                <strong>Role:</strong>
+                @switch (Model.AccountRole)
+                {
+                    case 1:
+                        <span class="badge bg-warning">Staff</span>
+                        break;
+                    case 2:
+                        <span class="badge bg-info">Lecturer</span>
+                        break;
+                    default:
+                        <span class="badge bg-secondary">Unknown</span>
+                        break;
+                }
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="small text-muted">
+                <i class="fas fa-info-circle me-1"></i>
+                Your Account ID and Role cannot be changed. Contact an administrator if you need to modify these fields.
+            </div>
+        </div>
+    </div>
+</form>

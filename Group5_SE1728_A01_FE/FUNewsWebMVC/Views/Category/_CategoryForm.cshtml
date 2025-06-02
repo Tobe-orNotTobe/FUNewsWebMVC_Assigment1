@@ -36,15 +36,15 @@
 
     <div class="form-group mb-3">
         <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="IsActive" name="IsActive" value="true" @(Model.IsActive == true ? "checked" : "") />
             <input type="hidden" name="IsActive" value="false" />
-            <input class="form-check-input" type="checkbox" id="IsActive" name="IsActive" value="true"
-            @(Model.IsActive == true ? "checked" : "") />
             <label class="form-check-label" for="IsActive">
                 <strong>Active Category</strong>
             </label>
             <div class="form-text">Check to make this category available for use in news articles</div>
         </div>
     </div>
+
 
     @if (Model.CategoryId != 0)
     {

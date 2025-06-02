@@ -18,17 +18,17 @@ namespace FUNewsWebMVC.Controllers
 			_logger = logger ?? throw new ArgumentNullException(nameof(logger));
 		}
 
-		private bool IsStaffOrAdmin()
+		private bool IsStaff()
 		{
 			var role = Request.Cookies["Role"];
-			return role == "Staff" || role == "Admin";
+			return role == "Staff";
 		}
 
 		public async Task<IActionResult> Index(string searchTerm = "")
 		{
-			if (!IsStaffOrAdmin())
+			if (!IsStaff())
 			{
-				TempData["Error"] = "Access denied. Only Staff and Admin can manage categories.";
+				TempData["Error"] = "Access denied. Only Staff can manage categories.";
 				return RedirectToAction("Index", "Home");
 			}
 
@@ -62,7 +62,7 @@ namespace FUNewsWebMVC.Controllers
 		[HttpGet]
 		public async Task<IActionResult> Create()
 		{
-			if (!IsStaffOrAdmin())
+			if (!IsStaff())
 			{
 				return Forbid();
 			}
@@ -71,16 +71,10 @@ namespace FUNewsWebMVC.Controllers
 			{
 				ViewBag.Action = "Create";
 
-				var categories = await _categoryService.GetCategoriesAsync();
-				ViewBag.ParentCategories = new SelectList(
-					categories.Where(c => c.IsActive == true),
-					"CategoryId", "CategoryName");
+				var categories = await _categoryService.GetCategoriesAsync(); // show all
+				ViewBag.ParentCategories = new SelectList(categories, "CategoryId", "CategoryName");
 
-				var model = new Category
-				{
-					IsActive = true 
-				};
-
+				var model = new Category { IsActive = true };
 				return PartialView("_CategoryForm", model);
 			}
 			catch (Exception ex)
@@ -92,18 +86,14 @@ namespace FUNewsWebMVC.Controllers
 
 		[HttpPost]
 		[ValidateAntiForgeryToken]
-		public async Task<IActionResult> Create(Category category, bool IsActive = true)
+		public async Task<IActionResult> Create(Category category)
 		{
-			if (!IsStaffOrAdmin())
+			if (!IsStaff())
 			{
 				return Json(new { success = false, message = "Access denied." });
 			}
 
-			// Explicitly set IsActive from form parameter
-			category.IsActive = IsActive;
-
-			// Log the received data
-			_logger.LogInformation($"Controller: Creating category {category.CategoryName}, IsActive: {category.IsActive}");
+			_logger.LogInformation($"Creating category: {category.CategoryName}, IsActive: {category.IsActive}");
 
 			if (ModelState.IsValid)
 			{
@@ -128,16 +118,14 @@ namespace FUNewsWebMVC.Controllers
 
 			ViewBag.Action = "Create";
 			var categories = await _categoryService.GetCategoriesAsync();
-			ViewBag.ParentCategories = new SelectList(
-				categories.Where(c => c.IsActive == true),
-				"CategoryId", "CategoryName");
+			ViewBag.ParentCategories = new SelectList(categories, "CategoryId", "CategoryName");
 			return PartialView("_CategoryForm", category);
 		}
 
 		[HttpGet]
 		public async Task<IActionResult> Edit(int id)
 		{
-			if (!IsStaffOrAdmin())
+			if (!IsStaff())
 			{
 				return Forbid();
 			}
@@ -151,14 +139,9 @@ namespace FUNewsWebMVC.Controllers
 				}
 
 				ViewBag.Action = "Edit";
-
-				// Get all categories except the current one for parent category dropdown
 				var categories = await _categoryService.GetCategoriesAsync();
-				var availableParents = categories.Where(c => c.CategoryId != id && c.IsActive == true);
-
-				ViewBag.ParentCategories = new SelectList(
-					availableParents,
-					"CategoryId", "CategoryName", category.ParentCategoryId);
+				var availableParents = categories.Where(c => c.CategoryId != id);
+				ViewBag.ParentCategories = new SelectList(availableParents, "CategoryId", "CategoryName", category.ParentCategoryId);
 
 				return PartialView("_CategoryForm", category);
 			}
@@ -171,18 +154,14 @@ namespace FUNewsWebMVC.Controllers
 
 		[HttpPost]
 		[ValidateAntiForgeryToken]
-		public async Task<IActionResult> Edit(Category category, bool IsActive = true)
+		public async Task<IActionResult> Edit(Category category)
 		{
-			if (!IsStaffOrAdmin())
+			if (!IsStaff())
 			{
 				return Json(new { success = false, message = "Access denied." });
 			}
 
-			// Explicitly set IsActive from form parameter
-			category.IsActive = IsActive;
-
-			// Log the received data
-			_logger.LogInformation($"Controller: Updating category {category.CategoryId}, IsActive: {category.IsActive}");
+			_logger.LogInformation($"Updating category: {category.CategoryId}, IsActive: {category.IsActive}");
 
 			if (ModelState.IsValid)
 			{
@@ -207,18 +186,15 @@ namespace FUNewsWebMVC.Controllers
 
 			ViewBag.Action = "Edit";
 			var categories = await _categoryService.GetCategoriesAsync();
-			var availableParents = categories.Where(c => c.CategoryId != category.CategoryId && c.IsActive == true);
-
-			ViewBag.ParentCategories = new SelectList(
-				availableParents,
-				"CategoryId", "CategoryName", category.ParentCategoryId);
+			var availableParents = categories.Where(c => c.CategoryId != category.CategoryId);
+			ViewBag.ParentCategories = new SelectList(availableParents, "CategoryId", "CategoryName", category.ParentCategoryId);
 			return PartialView("_CategoryForm", category);
 		}
 
 		[HttpPost]
 		public async Task<IActionResult> DeleteConfirmed(int id)
 		{
-			if (!IsStaffOrAdmin())
+			if (!IsStaff())
 			{
 				return Json(new { success = false, message = "Access denied." });
 			}
@@ -227,7 +203,6 @@ namespace FUNewsWebMVC.Controllers
 			{
 				_logger.LogInformation($"Attempting to delete category: {id}");
 
-				// Get the category first to check if it exists
 				var category = await _categoryService.GetCategoryByIdAsync(id);
 				if (category == null)
 				{

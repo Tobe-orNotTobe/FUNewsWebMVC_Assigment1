@@ -10,7 +10,6 @@ namespace FUNewsWebMVC.Filter
 			var request = context.HttpContext.Request;
 			var token = request.Cookies["Token"];
 
-			// Bỏ qua filter cho AuthController
 			var controller = context.RouteData.Values["controller"]?.ToString()?.ToLower();
 			if (controller == "auth")
 			{
