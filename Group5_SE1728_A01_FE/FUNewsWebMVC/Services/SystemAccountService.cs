@@ -40,7 +40,6 @@ namespace FUNewsWebMVC.Services
             var client = CreateAuthorizedClient();
             try
             {
-                account.AccountId = 6;
                 var response = await client.PostAsJsonAsync("SystemAccounts", account);
                 response.EnsureSuccessStatusCode();
             }

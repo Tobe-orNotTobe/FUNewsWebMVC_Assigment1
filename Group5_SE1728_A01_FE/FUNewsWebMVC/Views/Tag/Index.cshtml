@@ -1,1 +1,327 @@
-﻿
+﻿@model List<Tag>
+@{
+    ViewData["Title"] = "Tags Management";
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2>
+                <i class="fas fa-tags me-2"></i>
+                Tags Management
+            </h2>
+            <p class="text-muted mb-0">Manage news article tags</p>
+        </div>
+        <div>
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#tagModal" onclick="openCreateModal()">
+                <i class="fas fa-plus me-1"></i>
+                Create Tag
+            </button>
+        </div>
+    </div>
+
+    <!-- Search and Filter -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <form asp-action="Index" method="get" class="d-flex">
+                <input type="text" name="searchTerm" value="@ViewBag.SearchTerm"
+                       class="form-control me-2" placeholder="Search tags...">
+                <button class="btn btn-outline-secondary" type="submit">
+                    <i class="fas fa-search"></i>
+                </button>
+                @if (!string.IsNullOrEmpty(ViewBag.SearchTerm))
+                {
+                    <a asp-action="Index" class="btn btn-outline-danger ms-2">
+                        <i class="fas fa-times"></i>
+                    </a>
+                }
+            </form>
+        </div>
+    </div>
+
+    <!-- Tags Table -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-list me-2"></i>
+                Tags List (@Model.Count items)
+            </h5>
+        </div>
+        <div class="card-body">
+            @if (Model.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover" id="tagsTable">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>ID</th>
+                                <th>Tag Name</th>
+                                <th>Note</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var tag in Model)
+                            {
+                                <tr>
+                                    <td class="font-monospace">@tag.TagId</td>
+                                    <td>
+                                        <span class="badge bg-primary fs-6">#@tag.TagName</span>
+                                    </td>
+                                    <td>
+                                        <div class="text-truncate" style="max-width: 300px;" title="@tag.Note">
+                                            @(string.IsNullOrEmpty(tag.Note) ? "No note" : tag.Note)
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a asp-action="Details" asp-route-id="@tag.TagId"
+                                               class="btn btn-sm btn-outline-info" title="View Details">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-sm btn-outline-warning"
+                                                    title="Edit" onclick="openEditModal(@tag.TagId)">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <a asp-action="Delete" asp-route-id="@tag.TagId"
+                                               class="btn btn-sm btn-outline-danger" title="Delete"
+                                               onclick="return confirmDelete('Are you sure you want to delete this tag?')">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="text-center text-muted py-5">
+                    <i class="fas fa-tags fa-3x mb-3"></i>
+                    <h5>No Tags Found</h5>
+                    @if (!string.IsNullOrEmpty(ViewBag.SearchTerm))
+                    {
+                        <p>No tags match your search criteria. <a asp-action="Index">Show all tags</a></p>
+                    }
+                    else
+                    {
+                        <p>No tags have been created yet. Create your first tag to get started.</p>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Tag Modal for Create/Edit -->
+<div class="modal fade" id="tagModal" tabindex="-1" aria-labelledby="tagModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="tagModalLabel">
+                    <i class="fas fa-tag me-2"></i>
+                    <span id="modalTitle">Create Tag</span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="tagForm">
+                <div class="modal-body">
+                    <input type="hidden" id="tagId" name="TagId" value="0" />
+
+                    <div class="mb-3">
+                        <label for="tagName" class="form-label">Tag Name *</label>
+                        <input type="text" class="form-control" id="tagName" name="TagName"
+                               maxlength="50" required placeholder="Enter tag name...">
+                        <div class="form-text">Tag names should be descriptive and concise (max 50 characters)</div>
+                        <div class="invalid-feedback"></div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="tagNote" class="form-label">Note</label>
+                        <textarea class="form-control" id="tagNote" name="Note"
+                                  rows="3" maxlength="400"
+                                  placeholder="Optional note or description for this tag..."></textarea>
+                        <div class="form-text">Optional description or note about this tag (max 400 characters)</div>
+                        <div class="invalid-feedback"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="saveButton">
+                        <i class="fas fa-save me-1"></i>
+                        <span id="saveButtonText">Create Tag</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let isEditMode = false;
+
+        // Initialize DataTable
+        $(document).ready(function() {
+            if ($('#tagsTable').length > 0) {
+                $('#tagsTable').DataTable({
+                    "order": [[ 1, "asc" ]],
+                    "pageLength": 25,
+                    "responsive": true,
+                    "language": {
+                        "search": "Search tags:",
+                        "lengthMenu": "Show _MENU_ tags per page",
+                        "info": "Showing _START_ to _END_ of _TOTAL_ tags"
+                    }
+                });
+            }
+        });
+
+        // Open create modal
+        function openCreateModal() {
+            isEditMode = false;
+            document.getElementById('modalTitle').textContent = 'Create Tag';
+            document.getElementById('saveButtonText').textContent = 'Create Tag';
+            document.getElementById('tagForm').reset();
+            document.getElementById('tagId').value = '0';
+            clearValidation();
+        }
+
+        // Open edit modal
+        async function openEditModal(tagId) {
+            isEditMode = true;
+            document.getElementById('modalTitle').textContent = 'Edit Tag';
+            document.getElementById('saveButtonText').textContent = 'Update Tag';
+
+            try {
+                showLoading();
+                const response = await fetch(`/Tag/GetTagData?id=${tagId}`);
+                const result = await response.json();
+
+                if (result.success) {
+                    const data = result.data;
+                    document.getElementById('tagId').value = data.tagId;
+                    document.getElementById('tagName').value = data.tagName || '';
+                    document.getElementById('tagNote').value = data.note || '';
+
+                    var modal = new bootstrap.Modal(document.getElementById('tagModal'));
+                    modal.show();
+                } else {
+                    showAlert('danger', result.message);
+                }
+            } catch (error) {
+                showAlert('danger', 'Failed to load tag data.');
+                console.error('Error:', error);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Handle form submission
+        document.getElementById('tagForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const formData = new FormData(this);
+            const data = {
+                TagId: parseInt(formData.get('TagId')) || 0,
+                TagName: formData.get('TagName'),
+                Note: formData.get('Note') || null
+            };
+
+            try {
+                showLoading();
+                const url = isEditMode ? '/Tag/EditModal' : '/Tag/CreateModal';
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    var modal = bootstrap.Modal.getInstance(document.getElementById('tagModal'));
+                    modal.hide();
+
+                    showAlert('success', result.message);
+                    setTimeout(() => window.location.reload(), 1500);
+                } else {
+                    showAlert('danger', result.message);
+                    if (result.errors) {
+                        displayValidationErrors(result.errors);
+                    }
+                }
+            } catch (error) {
+                showAlert('danger', 'An error occurred while saving the tag.');
+                console.error('Error:', error);
+            } finally {
+                hideLoading();
+            }
+        });
+
+        // Utility functions
+        function clearValidation() {
+            document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+            document.querySelectorAll('.invalid-feedback').forEach(el => el.textContent = '');
+        }
+
+        function displayValidationErrors(errors) {
+            clearValidation();
+            errors.forEach(error => {
+                showAlert('warning', error);
+            });
+        }
+
+        function showAlert(type, message) {
+            const alertHtml = `
+                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'danger' ? 'exclamation-circle' : 'exclamation-triangle'} me-2"></i>
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+
+            const container = document.querySelector('main');
+            container.insertAdjacentHTML('afterbegin', alertHtml);
+
+            setTimeout(() => {
+                const alert = container.querySelector('.alert');
+                if (alert) {
+                    const bsAlert = new bootstrap.Alert(alert);
+                    bsAlert.close();
+                }
+            }, 5000);
+        }
+
+        // Character count for textarea
+        function updateCharCount(textarea, maxLength) {
+            const remaining = maxLength - textarea.value.length;
+            const counter = textarea.parentNode.querySelector('.char-counter');
+            if (counter) {
+                counter.textContent = `${remaining} characters remaining`;
+                counter.className = `char-counter ${remaining < 50 ? 'text-warning' : 'text-muted'}`;
+            }
+        }
+
+        // Add character counters
+        document.addEventListener('DOMContentLoaded', function() {
+            const textareas = document.querySelectorAll('textarea[maxlength]');
+            textareas.forEach(textarea => {
+                const maxLength = parseInt(textarea.getAttribute('maxlength'));
+                const counter = document.createElement('div');
+                counter.className = 'char-counter text-muted small';
+                counter.textContent = `${maxLength} characters remaining`;
+                textarea.parentNode.appendChild(counter);
+
+                textarea.addEventListener('input', () => updateCharCount(textarea, maxLength));
+            });
+        });
+    </script>
+}

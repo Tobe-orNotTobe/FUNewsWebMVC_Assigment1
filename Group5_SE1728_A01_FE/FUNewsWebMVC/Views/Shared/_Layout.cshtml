@@ -18,52 +18,130 @@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/FUNewsWebMVC.styles.css" asp-append-version="true" />
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.1/css/dataTables.bootstrap5.min.css" />
 </head>
 <body>
     <header>
-        <nav class="navbar navbar-expand-sm navbar-light bg-light border-bottom box-shadow mb-3">
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow">
             <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">FUNewsWebMVC</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse"
-                        aria-expanded="false" aria-label="Toggle navigation">
+                <a class="navbar-brand fw-bold" asp-area="" asp-controller="Home" asp-action="Index">
+                    <i class="fas fa-newspaper me-2"></i>
+                    FU News Management
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse"
+                        aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
 
                 <div class="collapse navbar-collapse" id="navbarCollapse">
-                    <ul class="navbar-nav me-auto mb-2 mb-sm-0">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                         <li class="nav-item">
-                            <a class="nav-link" asp-controller="Home" asp-action="Index">Home</a>
+                            <a class="nav-link" asp-controller="Home" asp-action="Index">
+                                <i class="fas fa-home me-1"></i>Home
+                            </a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-controller="NewsArticle" asp-action="Index">News Article</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-controller="Tag" asp-action="Index">Tag</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-controller="Category" asp-action="Index">Category</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-controller="SystemAccount" asp-action="Index">System Account</a>
-                        </li>
+
+                        @if (isLoggedIn)
+                        {
+                            <!-- Public News Articles (for all authenticated users) -->
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="NewsArticle" asp-action="Index">
+                                    <i class="fas fa-newspaper me-1"></i>News Articles
+                                </a>
+                            </li>
+
+                            @if (isStaff || isAdmin)
+                            {
+                                <!-- Staff can manage Categories and Tags -->
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-controller="Category" asp-action="Index">
+                                        <i class="fas fa-folder me-1"></i>Categories
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-controller="Tag" asp-action="Index">
+                                        <i class="fas fa-tags me-1"></i>Tags
+                                    </a>
+                                </li>
+                            }
+
+                            @if (isAdmin)
+                            {
+                                <!-- Admin-only features -->
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button"
+                                       data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="fas fa-cog me-1"></i>Administration
+                                    </a>
+                                    <ul class="dropdown-menu" aria-labelledby="adminDropdown">
+                                        <li>
+                                            <a class="dropdown-item" asp-controller="SystemAccount" asp-action="Index">
+                                                <i class="fas fa-users me-2"></i>System Accounts
+                                            </a>
+                                        </li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li>
+                                            <a class="dropdown-item" asp-controller="Report" asp-action="Index">
+                                                <i class="fas fa-chart-bar me-2"></i>Reports & Statistics
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </li>
+                            }
+                        }
                     </ul>
 
+                    <!-- User info and authentication -->
                     <ul class="navbar-nav ms-auto">
                         @if (isLoggedIn)
                         {
-                            <li class="nav-item">
-                                <span class="navbar-text me-3">
-                                    👋 Hello, <strong>@userName</strong> (@userRole)
-                                </span>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-danger" asp-controller="Auth" asp-action="Logout">Logout</a>
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
+                                   data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-user-circle me-1"></i>
+                                    <strong>@userName</strong>
+                                    <span class="badge bg-@(isAdmin ? "danger" : isStaff ? "warning" : "info") ms-1">
+                                        @userRole
+                                    </span>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                                    <li>
+                                        <h6 class="dropdown-header">
+                                            <i class="fas fa-user me-1"></i>@userName
+                                        </h6>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <a class="dropdown-item" href="#" onclick="showProfile()">
+                                            <i class="fas fa-user-edit me-2"></i>My Profile
+                                        </a>
+                                    </li>
+                                    @if (isStaff)
+                                    {
+                                        <li>
+                                            <a class="dropdown-item" href="#" onclick="showMyArticles()">
+                                                <i class="fas fa-newspaper me-2"></i>My Articles
+                                            </a>
+                                        </li>
+                                    }
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <a class="dropdown-item text-danger" asp-controller="Auth" asp-action="Logout">
+                                            <i class="fas fa-sign-out-alt me-2"></i>Logout
+                                        </a>
+                                    </li>
+                                </ul>
                             </li>
                         }
                         else
                         {
                             <li class="nav-item">
-                                <a class="nav-link text-primary" asp-controller="Auth" asp-action="Login">Login</a>
+                                <a class="nav-link btn btn-outline-light" asp-controller="Auth" asp-action="Login">
+                                    <i class="fas fa-sign-in-alt me-1"></i>Login
+                                </a>
                             </li>
                         }
                     </ul>
@@ -72,21 +150,120 @@
         </nav>
     </header>
 
-    <div class="container">
+    <div class="container-fluid">
         <main role="main" class="pb-3">
+            <!-- Alert Messages -->
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
+                    <i class="fas fa-check-circle me-2"></i>
+                    @TempData["Success"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    @TempData["Error"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+
+            @if (TempData["Warning"] != null)
+            {
+                <div class="alert alert-warning alert-dismissible fade show mt-3" role="alert">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    @TempData["Warning"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+
+            @if (TempData["Info"] != null)
+            {
+                <div class="alert alert-info alert-dismissible fade show mt-3" role="alert">
+                    <i class="fas fa-info-circle me-2"></i>
+                    @TempData["Info"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+
             @RenderBody()
         </main>
     </div>
 
-    <footer class="border-top footer text-muted mt-5">
-        <div class="container">
-            &copy; 2025 - FUNewsWebMVC - <a asp-controller="Home" asp-action="Privacy">Privacy</a>
+    <footer class="border-top footer text-muted mt-5 bg-light">
+        <div class="container py-3">
+            <div class="row">
+                <div class="col-md-6">
+                    <p class="mb-0">
+                        &copy; 2025 - FU News Management System
+                    </p>
+                </div>
+                <div class="col-md-6 text-end">
+                    <a asp-controller="Home" asp-action="Privacy" class="text-decoration-none">Privacy Policy</a>
+                    @if (isLoggedIn)
+                    {
+                        <span class="mx-2">|</span>
+                        <span class="small">
+                            Logged in as <strong>@userName</strong> (@userRole)
+                        </span>
+                    }
+                </div>
+            </div>
         </div>
     </footer>
 
+    <!-- Scripts -->
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    <!-- DataTables JS -->
+    <script src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.1/js/dataTables.bootstrap5.min.js"></script>
+
+    <!-- Global JavaScript Functions -->
+    <script>
+        // Show user profile (placeholder for future implementation)
+        function showProfile() {
+            alert('Profile management feature will be implemented soon.');
+        }
+
+        // Show user's articles (for Staff role)
+        function showMyArticles() {
+            window.location.href = '@Url.Action("Index", "NewsArticle")?filter=my-articles';
+        }
+
+        // Auto-hide alerts after 5 seconds
+        $(document).ready(function() {
+            setTimeout(function() {
+                $('.alert').fadeOut('slow');
+            }, 5000);
+        });
+
+        // Confirmation dialog for delete actions
+        function confirmDelete(message) {
+            return confirm(message || 'Are you sure you want to delete this item? This action cannot be undone.');
+        }
+
+        // Loading spinner functionality
+        function showLoading() {
+            $('#loadingSpinner').removeClass('d-none');
+        }
+
+        function hideLoading() {
+            $('#loadingSpinner').addClass('d-none');
+        }
+    </script>
+
     @await RenderSectionAsync("Scripts", required: false)
+
+    <!-- Loading Spinner -->
+    <div id="loadingSpinner" class="d-none position-fixed top-50 start-50 translate-middle" style="z-index: 9999;">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
 </body>
 </html>

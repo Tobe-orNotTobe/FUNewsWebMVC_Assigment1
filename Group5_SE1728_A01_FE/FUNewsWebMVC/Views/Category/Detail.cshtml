@@ -1,1 +1,87 @@
-﻿
+﻿@model Category
+@{
+    ViewData["Title"] = "Category Details";
+}
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title mb-0">
+                        <i class="fas fa-folder me-2"></i>
+                        Category Details
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Category ID:</label>
+                                <p class="form-control-plaintext">@Model.CategoryId</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Status:</label>
+                                <p class="form-control-plaintext">
+                                    @if (Model.IsActive == true)
+                                    {
+                                        <span class="badge bg-success fs-6">Active</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary fs-6">Inactive</span>
+                                    }
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Category Name:</label>
+                        <p class="form-control-plaintext">@Model.CategoryName</p>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Description:</label>
+                        <p class="form-control-plaintext">@Model.CategoryDesciption</p>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Parent Category:</label>
+                        <p class="form-control-plaintext">
+                            @if (Model.ParentCategory != null)
+                            {
+                                <span class="badge bg-info fs-6">@Model.ParentCategory.CategoryName</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">Root Category</span>
+                            }
+                        </p>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="d-flex justify-content-between">
+                        <a asp-action="Index" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>
+                            Back to List
+                        </a>
+                        <div>
+                            <a asp-action="Edit" asp-route-id="@Model.CategoryId" class="btn btn-warning me-2">
+                                <i class="fas fa-edit me-1"></i>
+                                Edit
+                            </a>
+                            <a asp-action="Delete" asp-route-id="@Model.CategoryId" class="btn btn-danger"
+                               onclick="return confirmDelete('Are you sure you want to delete this category?')">
+                                <i class="fas fa-trash me-1"></i>
+                                Delete
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

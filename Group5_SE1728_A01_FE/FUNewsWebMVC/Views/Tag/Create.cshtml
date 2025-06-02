@@ -1,1 +1,56 @@
-﻿
+﻿@model Tag
+@{
+    ViewData["Title"] = "Create Tag";
+}
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title mb-0">
+                        <i class="fas fa-plus me-2"></i>
+                        Create New Tag
+                    </h4>
+                </div>
+
+                <form asp-action="Create" method="post">
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label asp-for="TagName" class="form-label">Tag Name *</label>
+                            <input asp-for="TagName" class="form-control" maxlength="50" required
+                                   placeholder="Enter tag name..." />
+                            <span asp-validation-for="TagName" class="text-danger"></span>
+                            <div class="form-text">Tag names should be descriptive and concise (max 50 characters)</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Note" class="form-label">Note</label>
+                            <textarea asp-for="Note" class="form-control" rows="3" maxlength="400"
+                                      placeholder="Optional note or description for this tag..."></textarea>
+                            <span asp-validation-for="Note" class="text-danger"></span>
+                            <div class="form-text">Optional description or note about this tag (max 400 characters)</div>
+                        </div>
+                    </div>
+
+                    <div class="card-footer">
+                        <div class="d-flex justify-content-between">
+                            <a asp-action="Index" class="btn btn-secondary">
+                                <i class="fas fa-times me-1"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i>Create Tag
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

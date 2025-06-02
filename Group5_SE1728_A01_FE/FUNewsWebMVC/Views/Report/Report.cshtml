@@ -1,0 +1,274 @@
+﻿@model ReportViewModel
+@{
+    ViewData["Title"] = "News Articles Report";
+}
+
+<div class="container-fluid">
+    <!-- Report Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2>
+                <i class="fas fa-chart-bar me-2"></i>
+                News Articles Report
+            </h2>
+            <p class="text-muted mb-0">
+                Period: @Model.StartDate.ToString("MMM dd, yyyy") - @Model.EndDate.ToString("MMM dd, yyyy")
+            </p>
+        </div>
+        <div>
+            <a asp-action="ExportCsv" asp-route-startDate="@Model.StartDate.ToString("yyyy-MM-dd")"
+               asp-route-endDate="@Model.EndDate.ToString("yyyy-MM-dd")"
+               class="btn btn-success me-2">
+                <i class="fas fa-download me-1"></i>
+                Export CSV
+            </a>
+            <a asp-action="Index" class="btn btn-outline-primary">
+                <i class="fas fa-arrow-left me-1"></i>
+                New Report
+            </a>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-center bg-primary text-white">
+                <div class="card-body">
+                    <h3 class="card-title">@Model.Summary.TotalArticles</h3>
+                    <p class="card-text">Total Articles</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center bg-success text-white">
+                <div class="card-body">
+                    <h3 class="card-title">@Model.Summary.ActiveArticles</h3>
+                    <p class="card-text">Active Articles</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center bg-secondary text-white">
+                <div class="card-body">
+                    <h3 class="card-title">@Model.Summary.InactiveArticles</h3>
+                    <p class="card-text">Inactive Articles</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center bg-info text-white">
+                <div class="card-body">
+                    <h3 class="card-title">@Model.Summary.ArticlesByCategory.Count</h3>
+                    <p class="card-text">Categories Used</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Articles by Category</h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.Summary.ArticlesByCategory.Any())
+                    {
+                        <canvas id="categoryChart" width="400" height="200"></canvas>
+                    }
+                    else
+                    {
+                        <p class="text-muted text-center">No data available</p>
+                    }
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Articles by Author</h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.Summary.ArticlesByAuthor.Any())
+                    {
+                        <canvas id="authorChart" width="400" height="200"></canvas>
+                    }
+                    else
+                    {
+                        <p class="text-muted text-center">No data available</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Articles Table -->
+    <div class="card">
+        <div class="card-header">
+            <h5>
+                <i class="fas fa-list me-2"></i>
+                Detailed Articles List (Sorted by Date - Newest First)
+            </h5>
+        </div>
+        <div class="card-body">
+            @if (Model.Articles.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover" id="articlesTable">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Article ID</th>
+                                <th>Title</th>
+                                <th>Headline</th>
+                                <th>Created Date</th>
+                                <th>Category</th>
+                                <th>Author</th>
+                                <th>Status</th>
+                                <th>Tags Count</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var article in Model.Articles)
+                            {
+                                <tr>
+                                    <td class="font-monospace">@article.NewsArticleId</td>
+                                    <td>
+                                        <div class="text-truncate" style="max-width: 200px;"
+                                             title="@article.NewsTitle">
+                                            @article.NewsTitle
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="text-truncate" style="max-width: 250px;"
+                                             title="@article.Headline">
+                                            @article.Headline
+                                        </div>
+                                    </td>
+                                    <td>@article.CreatedDate?.ToString("MMM dd, yyyy")</td>
+                                    <td>
+                                        <span class="badge bg-info">@article.CategoryName</span>
+                                    </td>
+                                    <td>@article.CreatedByName</td>
+                                    <td>
+                                        @if (article.NewsStatus == true)
+                                        {
+                                            <span class="badge bg-success">Active</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">Inactive</span>
+                                        }
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-primary">@article.TagCount</span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="text-center text-muted py-4">
+                    <i class="fas fa-inbox fa-3x mb-3"></i>
+                    <h5>No Articles Found</h5>
+                    <p>No news articles were created in the specified date range.</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Category Chart
+        @if (Model.Summary.ArticlesByCategory.Any())
+        {
+            <text>
+                const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+                new Chart(categoryCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: [@Html.Raw(string.Join(",", Model.Summary.ArticlesByCategory.Keys.Select(k => "\"" + k + "\"")))],
+                        datasets: [{
+                            data: [@string.Join(",", Model.Summary.ArticlesByCategory.Values)],
+                            backgroundColor: [
+                                '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0',
+                                '#9966FF', '#FF9F40', '#FF6384', '#C9CBCF'
+                            ]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
+                    }
+                });
+            </text>
+        }
+
+        // Author Chart
+        @if (Model.Summary.ArticlesByAuthor.Any())
+        {
+            <text>
+                const authorCtx = document.getElementById('authorChart').getContext('2d');
+                new Chart(authorCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: [@Html.Raw(string.Join(",", Model.Summary.ArticlesByAuthor.Keys.Select(k => "\"" + k + "\"")))],
+                        datasets: [{
+                            label: 'Articles Count',
+                            data: [@string.Join(",", Model.Summary.ArticlesByAuthor.Values)],
+                            backgroundColor: '#36A2EB',
+                            borderColor: '#36A2EB',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    stepSize: 1
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        }
+                    }
+                });
+            </text>
+        }
+
+        // Initialize DataTable for better sorting and search
+        @if (Model.Articles.Any())
+        {
+            <text>
+                $(document).ready(function() {
+                    $('#articlesTable').DataTable({
+                        "order": [[ 3, "desc" ]], // Sort by date column (index 3) descending
+                        "pageLength": 25,
+                        "responsive": true,
+                        "language": {
+                            "search": "Search articles:",
+                            "lengthMenu": "Show _MENU_ articles per page",
+                            "info": "Showing _START_ to _END_ of _TOTAL_ articles"
+                        }
+                    });
+                });
+            </text>
+        }
+    </script>
+}
