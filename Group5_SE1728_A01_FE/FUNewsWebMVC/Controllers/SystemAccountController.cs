@@ -10,23 +10,41 @@ namespace FUNewsWebMVC.Controllers
     public class SystemAccountController : Controller
     {
         private readonly ISystemAccountService _service;
-        private const int PageSize = 3;
 
         public SystemAccountController(ISystemAccountService service)
         {
             _service = service;
         }
+        public int TotalCount { get; set; }
+        public int PageSize { get; set; } = 3;
+        public int PageIndex { get; set; } = 1;
+        public int TotalPages => (int)Math.Ceiling((double)TotalCount / PageSize); 
 
-        public async Task<IActionResult> Index(int pageIndex = 1)
+        public async Task<IActionResult> Index(string? searchTerm, int pageIndex = 1)
         {
             var accounts = await _service.GetAccountsAsync();
-            var totalCount = accounts.Count;
 
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+            {
+                accounts = accounts
+                    .Where(c => c.AccountName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+            }
+
+            PageIndex = pageIndex;
+
+            TotalCount = accounts.Count;
+
+            var pagedAccounts = accounts
+               .Skip((pageIndex - 1) * PageSize)
+               .Take(PageSize)
+               .ToList();
             var model = new SystemAccountListViewModel
             {
+                Accounts = pagedAccounts,
                 PageIndex = pageIndex,
-                TotalPages = (int)Math.Ceiling((double)totalCount / PageSize),
-                Accounts = accounts.Skip((pageIndex - 1) * PageSize).Take(PageSize).ToList()
+                TotalPages = (int)Math.Ceiling((double)TotalCount / PageSize),
+                SearchTerm = searchTerm
             };
 
             return View(model);

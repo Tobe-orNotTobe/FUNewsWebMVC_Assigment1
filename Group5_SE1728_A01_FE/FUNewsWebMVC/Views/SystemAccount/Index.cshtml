@@ -11,6 +11,12 @@
     Create New Account
 </button>
 
+<form asp-action="Index" method="get" class="mb-3 d-flex">
+    <input type="text" name="searchTerm" class="form-control me-2" placeholder="Search categories..."
+           value="@Model.SearchTerm" />
+    <button type="submit" class="btn btn-primary">Search</button>
+</form>
+
 <!-- Table -->
 <table class="table table-striped">
     <thead>
@@ -40,19 +46,19 @@
 </table>
 
 <!-- Pagination -->
-@if (Model.TotalPages > 1)
-{
-    <nav>
-        <ul class="pagination">
-            @for (int i = 1; i <= Model.TotalPages; i++)
-            {
-                <li class="page-item @(i == Model.PageIndex ? "active" : "")">
-                    <a class="page-link" href="@Url.Action("Index", new { pageIndex = i })">@i</a>
-                </li>
-            }
-        </ul>
-    </nav>
-}
+<div>
+    <ul class="pagination">
+        @for (var i = 1; i <= Model.TotalPages; i++)
+        {
+            <li class="page-item @(i == Model.PageIndex ? "active" : "")">
+                <a class="page-link"
+                   asp-action="Index"
+                   asp-route-pageIndex="@i"
+                   asp-route-searchTerm="@Model.SearchTerm">@i</a>
+            </li>
+        }
+    </ul>
+</div>
 
 <!-- Modal -->
 <div class="modal fade" id="accountModal" tabindex="-1" role="dialog" aria-labelledby="accountModalLabel" aria-hidden="true">

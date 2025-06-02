@@ -25,7 +25,7 @@ namespace FUNewsWebMVC.Controllers
 
         public async Task<IActionResult> Index(string? searchTerm, int pageIndex = 1)
         {
-            PageIndex = pageIndex;
+            
             var categories = await _service.GetCategoriesAsync();
 
             if (!string.IsNullOrWhiteSpace(searchTerm))
