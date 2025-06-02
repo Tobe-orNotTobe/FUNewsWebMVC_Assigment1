@@ -1,0 +1,228 @@
+﻿@model NewsArticle
+@{
+    var canManage = ViewBag.CanManage as bool? ?? false;
+}
+
+<div class="container-fluid">
+    <!-- Article Header -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <h3 class="mb-2 text-primary">@Model.NewsTitle</h3>
+                    <p class="lead text-muted mb-0">@Model.Headline</p>
+                </div>
+                <div>
+                    @if (Model.NewsStatus == true)
+                    {
+                        <span class="badge bg-success fs-6">Published</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-secondary fs-6">Draft</span>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Article Metadata -->
+        <div class="card-body border-bottom bg-light">
+            <div class="row text-muted small">
+                <div class="col-md-6">
+                    <p class="mb-2">
+                        <i class="fas fa-user me-2"></i>
+                        <strong>Author:</strong> @(Model.CreatedBy?.AccountName ?? "Unknown")
+                    </p>
+                    <p class="mb-2">
+                        <i class="fas fa-calendar me-2"></i>
+                        <strong>Published:</strong> @Model.CreatedDate?.ToString("MMM dd, yyyy HH:mm")
+                    </p>
+                    @if (Model.ModifiedDate.HasValue)
+                    {
+                        <p class="mb-2">
+                            <i class="fas fa-edit me-2"></i>
+                            <strong>Last Updated:</strong> @Model.ModifiedDate?.ToString("MMM dd, yyyy HH:mm")
+                        </p>
+                    }
+                </div>
+                <div class="col-md-6">
+                    <p class="mb-2">
+                        <i class="fas fa-folder me-2"></i>
+                        <strong>Category:</strong>
+                        @if (Model.Category != null)
+                        {
+                            <span class="badge bg-info">@Model.Category.CategoryName</span>
+                        }
+                        else
+                        {
+                            <span class="text-muted">No Category</span>
+                        }
+                    </p>
+                    <p class="mb-2">
+                        <i class="fas fa-hashtag me-2"></i>
+                        <strong>Article ID:</strong>
+                        <code>@Model.NewsArticleId</code>
+                    </p>
+                    @if (!string.IsNullOrEmpty(Model.NewsSource))
+                    {
+                        <p class="mb-2">
+                            <i class="fas fa-link me-2"></i>
+                            <strong>Source:</strong>
+                            <a href="@Model.NewsSource" target="_blank" class="text-decoration-none">
+                                View Source <i class="fas fa-external-link-alt"></i>
+                            </a>
+                        </p>
+                    }
+                </div>
+            </div>
+
+            <!-- Tags -->
+            @if (Model.Tags != null && Model.Tags.Any())
+            {
+                <div class="mt-3 pt-3 border-top">
+                    <strong class="text-muted me-2">Tags:</strong>
+                    @foreach (var tag in Model.Tags)
+                    {
+                        <span class="badge bg-light text-dark me-1">#@tag.TagName</span>
+                    }
+                </div>
+            }
+
+            <!-- Article Statistics -->
+            <div class="mt-3 pt-3 border-top">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <div class="h5 mb-0 text-primary">@(Model.NewsContent?.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length ?? 0)</div>
+                            <small class="text-muted">Words</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <div class="h5 mb-0 text-info">@(Model.NewsContent?.Length ?? 0)</div>
+                            <small class="text-muted">Characters</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <div class="h5 mb-0 text-success">@(Model.Tags?.Count ?? 0)</div>
+                            <small class="text-muted">Tags</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <div class="h5 mb-0 text-warning">
+                                @if (Model.NewsContent != null)
+                                {
+                                    @Math.Ceiling((double)Model.NewsContent.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length / 200)
+                                }
+                                else
+                                {
+                                    <text>0</text>
+                                }
+                            </div>
+                            <small class="text-muted">Min Read</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Article Content -->
+        <div class="card-body">
+            <div class="article-content" style="line-height: 1.8; font-size: 1.05rem; max-height: 400px; overflow-y: auto;">
+                @if (!string.IsNullOrEmpty(Model.NewsContent))
+                {
+                    @Html.Raw(Model.NewsContent.Replace("\n", "<br/>"))
+                }
+                else
+                {
+                    <div class="text-center py-4">
+                        <i class="fas fa-file-alt fa-2x text-muted mb-3"></i>
+                        <p class="text-muted fst-italic">No content available for this article.</p>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        @if (canManage)
+        {
+            <div class="card-footer">
+                <div class="d-flex justify-content-center gap-2">
+                    <button type="button" class="btn btn-warning open-edit-modal-from-detail"
+                            data-url="@Url.Action("Edit", new { id = Model.NewsArticleId })">
+                        <i class="fas fa-edit me-1"></i>Edit Article
+                    </button>
+                    <button type="button" class="btn btn-danger btn-delete-from-detail"
+                            data-id="@Model.NewsArticleId" data-name="@Model.NewsTitle">
+                        <i class="fas fa-trash me-1"></i>Delete
+                    </button>
+                    <button type="button" class="btn btn-outline-info" onclick="copyArticleLink()">
+                        <i class="fas fa-copy me-1"></i>Copy Link
+                    </button>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="card-footer">
+                <div class="d-flex justify-content-center">
+                    <button type="button" class="btn btn-outline-info" onclick="copyArticleLink()">
+                        <i class="fas fa-copy me-1"></i>Copy Link
+                    </button>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<script>
+    // Handle edit button from detail modal
+    $(document).on('click', '.open-edit-modal-from-detail', function () {
+        const url = $(this).data('url');
+        $('#detailModal').modal('hide');
+
+        setTimeout(() => {
+            $.get(url, function (data) {
+                $('#modalBody').html(data);
+                $('#articleModalLabel').text('Edit Article');
+                $('#articleModal').modal('show');
+            });
+        }, 300);
+    });
+
+    // Handle delete button from detail modal
+    $(document).on('click', '.btn-delete-from-detail', function () {
+        const articleId = $(this).data('id');
+        const articleName = $(this).data('name');
+        $('#deleteArticleId').val(articleId);
+        $('#deleteArticleName').text(articleName);
+
+        $('#detailModal').modal('hide');
+        setTimeout(() => {
+            const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+            modal.show();
+        }, 300);
+    });
+
+    // Copy article link
+    function copyArticleLink() {
+        const articleId = '@Model.NewsArticleId';
+        // Since we don't have standalone details page, we'll copy the main page link with a parameter
+        const link = window.location.origin + '/NewsArticle?articleId=' + articleId;
+
+        navigator.clipboard.writeText(link).then(function() {
+            showAlert('info', 'Article link copied to clipboard!');
+        }).catch(function() {
+            // Fallback for older browsers
+            const textArea = document.createElement('textarea');
+            textArea.value = link;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            showAlert('info', 'Article link copied to clipboard!');
+        });
+    }
+</script>

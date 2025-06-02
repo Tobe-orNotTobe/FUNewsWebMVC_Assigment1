@@ -1,0 +1,226 @@
+﻿@model FUNewsWebMVC.Models.NewsArticle
+
+@Html.AntiForgeryToken()
+
+<form id="articleForm" asp-action="@ViewBag.Action" method="post">
+    @if (!string.IsNullOrEmpty(Model.NewsArticleId))
+    {
+        <input type="hidden" asp-for="NewsArticleId" />
+        <input type="hidden" asp-for="CreatedDate" />
+        <input type="hidden" asp-for="CreatedById" />
+    }
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="form-group mb-3">
+                <label asp-for="NewsTitle" class="form-label">Article Title *</label>
+                <input asp-for="NewsTitle" class="form-control" maxlength="400" required />
+                <span asp-validation-for="NewsTitle" class="text-danger"></span>
+                <div class="form-text">Enter a compelling title for your article (max 400 characters)</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="form-group mb-3">
+                <label asp-for="CategoryId" class="form-label">Category *</label>
+                <select asp-for="CategoryId" class="form-select" required
+                        asp-items="ViewBag.Categories">
+                    <option value="">-- Select Category --</option>
+                </select>
+                <span asp-validation-for="CategoryId" class="text-danger"></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group mb-3">
+        <label asp-for="Headline" class="form-label">Headline *</label>
+        <input asp-for="Headline" class="form-control" maxlength="150" required />
+        <span asp-validation-for="Headline" class="text-danger"></span>
+        <div class="form-text">Brief summary of the article (max 150 characters)</div>
+    </div>
+
+    <div class="form-group mb-3">
+        <label asp-for="NewsContent" class="form-label">Content *</label>
+        <textarea asp-for="NewsContent" class="form-control" rows="8" maxlength="4000" required></textarea>
+        <span asp-validation-for="NewsContent" class="text-danger"></span>
+        <div class="form-text">Main article content (max 4000 characters)</div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="form-group mb-3">
+                <label asp-for="NewsSource" class="form-label">Source</label>
+                <input asp-for="NewsSource" class="form-control" maxlength="400"
+                       placeholder="Source or reference URL" />
+                <span asp-validation-for="NewsSource" class="text-danger"></span>
+                <div class="form-text">Optional source or reference link</div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="form-group mb-3">
+                <label class="form-label">Tags</label>
+                <div class="border rounded p-2" style="max-height: 120px; overflow-y: auto;">
+                    @{
+                        var tags = ViewBag.Tags as List<Tag> ?? new List<Tag>();
+                        var selectedTagIds = Model.Tags?.Select(t => t.TagId).ToList() ?? new List<int>();
+                    }
+                    @if (tags.Any())
+                    {
+                        @foreach (var tag in tags)
+                        {
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="checkbox"
+                                       name="selectedTags" value="@tag.TagId" id="tag_@tag.TagId"
+                                @(selectedTagIds.Contains(tag.TagId) ? "checked" : "") />
+                                <label class="form-check-label" for="tag_@tag.TagId">
+                                    @tag.TagName
+                                </label>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <p class="text-muted mb-0">No tags available</p>
+                    }
+                </div>
+                <div class="form-text">Select relevant tags for this article</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group mb-3">
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="NewsStatus" name="NewsStatus" value="true"
+            @(Model.NewsStatus == true ? "checked" : "") />
+            <label class="form-check-label" for="NewsStatus">
+                <strong>Publish Article (Active)</strong>
+            </label>
+            <div class="form-text">Check to make this article visible to the public</div>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.NewsArticleId))
+    {
+        <!-- Article Metadata for Edit -->
+        <div class="row mt-4 pt-3 border-top bg-light rounded p-3">
+            <div class="col-md-6">
+                <div class="mb-2">
+                    <strong>Article ID:</strong>
+                    <code>@Model.NewsArticleId</code>
+                </div>
+                <div class="mb-2">
+                    <strong>Created:</strong>
+                    @Model.CreatedDate?.ToString("MMM dd, yyyy HH:mm")
+                </div>
+                <div class="mb-2">
+                    <strong>Author:</strong>
+                    @(Model.CreatedBy?.AccountName ?? "Unknown")
+                </div>
+            </div>
+            <div class="col-md-6">
+                @if (Model.ModifiedDate.HasValue)
+                {
+                    <div class="mb-2">
+                        <strong>Last Modified:</strong>
+                        @Model.ModifiedDate?.ToString("MMM dd, yyyy HH:mm")
+                    </div>
+                }
+                <div class="mb-2">
+                    <strong>Current Status:</strong>
+                    @if (Model.NewsStatus == true)
+                    {
+                        <span class="badge bg-success">Active</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-secondary">Inactive</span>
+                    }
+                </div>
+                <div class="mb-2">
+                    <strong>Tags:</strong>
+                    <span class="badge bg-primary">@(Model.Tags?.Count ?? 0)</span>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Debug info (remove in production) -->
+    @if (ViewBag.Action != null)
+    {
+        <input type="hidden" name="debug_action" value="@ViewBag.Action" />
+    }
+</form>
+
+<script>
+    // Character counter for content fields
+    $(document).ready(function() {
+        function addCharacterCounter(selector, maxLength) {
+            const element = $(selector);
+            if (element.length > 0) {
+                const counter = $('<div class="text-muted small mt-1"></div>');
+                element.parent().append(counter);
+
+                function updateCounter() {
+                    const remaining = maxLength - element.val().length;
+                    counter.text(`${remaining} characters remaining`);
+                    counter.removeClass('text-warning text-danger').addClass('text-muted');
+
+                    if (remaining < 100) {
+                        counter.removeClass('text-muted').addClass('text-warning');
+                    }
+                    if (remaining < 20) {
+                        counter.removeClass('text-warning').addClass('text-danger');
+                    }
+                }
+
+                element.on('input', updateCounter);
+                updateCounter();
+            }
+        }
+
+        // Add counters to text fields
+        addCharacterCounter('#NewsTitle', 400);
+        addCharacterCounter('#Headline', 150);
+        addCharacterCounter('#NewsContent', 4000);
+        addCharacterCounter('#NewsSource', 400);
+
+        // Ensure form validation
+        $('#articleForm').on('submit', function(e) {
+            // Custom validation
+            let isValid = true;
+
+            if (!$('#NewsTitle').val().trim()) {
+                isValid = false;
+                $('#NewsTitle').addClass('is-invalid');
+            } else {
+                $('#NewsTitle').removeClass('is-invalid');
+            }
+
+            if (!$('#Headline').val().trim()) {
+                isValid = false;
+                $('#Headline').addClass('is-invalid');
+            } else {
+                $('#Headline').removeClass('is-invalid');
+            }
+
+            if (!$('#NewsContent').val().trim()) {
+                isValid = false;
+                $('#NewsContent').addClass('is-invalid');
+            } else {
+                $('#NewsContent').removeClass('is-invalid');
+            }
+
+            if (!$('#CategoryId').val()) {
+                isValid = false;
+                $('#CategoryId').addClass('is-invalid');
+            } else {
+                $('#CategoryId').removeClass('is-invalid');
+            }
+
+            if (!isValid) {
+                e.preventDefault();
+                alert('Please fill in all required fields.');
+                return false;
+            }
+        });
+    });
+</script>

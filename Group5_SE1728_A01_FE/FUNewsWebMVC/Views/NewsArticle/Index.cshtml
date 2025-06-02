@@ -1,7 +1,6 @@
-﻿<!-- Views/NewsArticle/Index.cshtml -->
-@model List<NewsArticle>
+﻿@model List<NewsArticle>
 @{
-    ViewData["Title"] = "News Articles";
+    ViewData["Title"] = "News Articles Management";
     var canManage = ViewBag.CanManage as bool? ?? false;
     var isMyArticles = ViewBag.IsMyArticles as bool? ?? false;
     var categories = ViewBag.Categories as List<Category> ?? new List<Category>();
@@ -18,25 +17,15 @@
                 }
                 else
                 {
-                    <text>News Articles</text>
+                    <text>News Articles Management</text>
                 }
             </h2>
-            <p class="text-muted mb-0">
-                @if (isMyArticles)
-                {
-                    <text>Manage your created articles</text>
-                }
-                else
-                {
-                    <text>Browse and manage news articles</text>
-                }
-            </p>
+            <p class="text-muted mb-0">Manage news articles and content</p>
         </div>
         <div>
             @if (canManage)
             {
-                <button type="button" class="btn btn-primary me-2" data-bs-toggle="modal"
-                        data-bs-target="#articleModal" onclick="openCreateModal()">
+                <button type="button" class="btn btn-primary me-2" id="createBtn">
                     <i class="fas fa-plus me-1"></i>
                     Create Article
                 </button>
@@ -59,377 +48,209 @@
     </div>
 
     <!-- Search and Filter Controls -->
-    <div class="card mb-4">
+    <form asp-action="Index" method="get" class="mb-3 d-flex">
+        <input type="hidden" name="filter" value="@ViewBag.Filter" />
+        <input type="text" name="searchTerm" class="form-control me-2" placeholder="Search articles..."
+               value="@ViewBag.SearchTerm" style="max-width: 300px;" />
+        <select name="categoryId" class="form-select me-2" style="max-width: 200px;">
+            <option value="">All Categories</option>
+            @foreach (var category in categories.Where(c => c.IsActive == true))
+            {
+                <option value="@category.CategoryId"
+                        selected="@(ViewBag.CategoryId?.ToString() == category.CategoryId.ToString())">
+                    @category.CategoryName
+                </option>
+            }
+        </select>
+        <button type="submit" class="btn btn-primary me-2">
+            <i class="fas fa-search"></i> Search
+        </button>
+        <a asp-action="Index" class="btn btn-outline-secondary">
+            <i class="fas fa-times"></i> Clear
+        </a>
+    </form>
+
+    <!-- Articles Table -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-list me-2"></i>
+                Articles List (@Model.Count items)
+            </h5>
+        </div>
         <div class="card-body">
-            <form asp-action="Index" method="get" class="row g-3">
-                <input type="hidden" name="filter" value="@ViewBag.Filter" />
-
-                <div class="col-md-4">
-                    <label for="searchTerm" class="form-label">Search Articles</label>
-                    <input type="text" name="searchTerm" id="searchTerm" value="@ViewBag.SearchTerm"
-                           class="form-control" placeholder="Search by title, headline, or content...">
-                </div>
-
-                <div class="col-md-3">
-                    <label for="categoryId" class="form-label">Filter by Category</label>
-                    <select name="categoryId" id="categoryId" class="form-select">
-                        <option value="">All Categories</option>
-                        @foreach (var category in categories.Where(c => c.IsActive == true))
-                        {
-                            <option value="@category.CategoryId"
-                                    selected="@(ViewBag.CategoryId?.ToString() == category.CategoryId.ToString())">
-                                @category.CategoryName
-                            </option>
-                        }
-                    </select>
-                </div>
-
-                <div class="col-md-3 d-flex align-items-end">
-                    <button type="submit" class="btn btn-outline-primary me-2">
-                        <i class="fas fa-search me-1"></i>Search
-                    </button>
-                    <a asp-action="Index" class="btn btn-outline-secondary">
-                        <i class="fas fa-times me-1"></i>Clear
-                    </a>
-                </div>
-
-                <div class="col-md-2 d-flex align-items-end">
-                    @if (!isMyArticles)
-                    {
-                        <a asp-action="Index" asp-route-filter="active" class="btn btn-outline-success w-100">
-                            <i class="fas fa-eye me-1"></i>Active Only
-                        </a>
-                    }
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Articles Grid/List -->
-    @if (Model.Any())
-    {
-        <div class="row mb-3">
-            <div class="col-md-6">
-                <h5 class="text-muted">Found @Model.Count article(s)</h5>
-            </div>
-            <div class="col-md-6 text-end">
-                <div class="btn-group" role="group">
-                    <button type="button" class="btn btn-outline-secondary active" onclick="toggleView('grid')">
-                        <i class="fas fa-th"></i> Grid
-                    </button>
-                    <button type="button" class="btn btn-outline-secondary" onclick="toggleView('list')">
-                        <i class="fas fa-list"></i> List
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Grid View -->
-        <div id="gridView" class="row">
-            @foreach (var article in Model)
+            @if (Model.Any())
             {
-                <div class="col-lg-4 col-md-6 mb-4">
-                    <div class="card h-100 article-card">
-                        <div class="card-header d-flex justify-content-between align-items-center">
-                            <small class="text-muted">
-                                <i class="fas fa-calendar me-1"></i>
-                                @article.CreatedDate?.ToString("MMM dd, yyyy")
-                            </small>
-                            <div>
-                                @if (article.NewsStatus == true)
-                                {
-                                    <span class="badge bg-success">Active</span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-secondary">Inactive</span>
-                                }
-                            </div>
-                        </div>
-                        <div class="card-body">
-                            <h6 class="card-title text-truncate" title="@article.NewsTitle">
-                                @article.NewsTitle
-                            </h6>
-                            <p class="card-text text-muted small mb-2">
-                                @article.Headline
-                            </p>
-                            <div class="mb-2">
-                                @if (article.Category != null)
-                                {
-                                    <span class="badge bg-info me-1">@article.Category.CategoryName</span>
-                                }
-                                @if (article.Tags != null && article.Tags.Any())
-                                {
-                                    @foreach (var tag in article.Tags.Take(2))
-                                    {
-                                        <span class="badge bg-light text-dark me-1">#@tag.TagName</span>
-                                    }
-                                    @if (article.Tags.Count > 2)
-                                    {
-                                        <span class="badge bg-light text-dark">+@(article.Tags.Count - 2) more</span>
-                                    }
-                                }
-                            </div>
-                            <small class="text-muted">
-                                <i class="fas fa-user me-1"></i>
-                                @(article.CreatedBy?.AccountName ?? "Unknown")
-                            </small>
-                        </div>
-                        <div class="card-footer">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div class="btn-group btn-group-sm">
-                                    <a asp-action="Details" asp-route-id="@article.NewsArticleId"
-                                       class="btn btn-outline-info" title="View Details">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                    @if (canManage)
-                                    {
-                                        <button type="button" class="btn btn-outline-warning"
-                                                title="Edit" onclick="openEditModal('@article.NewsArticleId')">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-outline-@(article.NewsStatus == true ? "secondary" : "success")"
-                                                title="Toggle Status" onclick="toggleStatus('@article.NewsArticleId')">
-                                            <i class="fas fa-@(article.NewsStatus == true ? "eye-slash" : "eye")"></i>
-                                        </button>
-                                        <a asp-action="Delete" asp-route-id="@article.NewsArticleId"
-                                           class="btn btn-outline-danger" title="Delete"
-                                           onclick="return confirmDelete('Are you sure you want to delete this article?')">
-                                            <i class="fas fa-trash"></i>
-                                        </a>
-                                    }
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            }
-        </div>
-
-        <!-- List View (Hidden by default) -->
-        <div id="listView" class="d-none">
-            <div class="card">
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-striped table-hover" id="articlesTable">
-                            <thead class="table-dark">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover" id="articlesTable">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>ID</th>
+                                <th>Title</th>
+                                <th>Headline</th>
+                                <th>Category</th>
+                                <th>Author</th>
+                                <th>Created Date</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var article in Model)
+                            {
                                 <tr>
-                                    <th>Title</th>
-                                    <th>Headline</th>
-                                    <th>Category</th>
-                                    <th>Author</th>
-                                    <th>Created Date</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
+                                    <td class="font-monospace">@article.NewsArticleId</td>
+                                    <td>
+                                        <div class="text-truncate" style="max-width: 200px;" title="@article.NewsTitle">
+                                            <strong>@article.NewsTitle</strong>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="text-truncate" style="max-width: 250px;" title="@article.Headline">
+                                            @article.Headline
+                                        </div>
+                                    </td>
+                                    <td>
+                                        @if (article.Category != null)
+                                        {
+                                            <span class="badge bg-info">@article.Category.CategoryName</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">No Category</span>
+                                        }
+                                    </td>
+                                    <td>@(article.CreatedBy?.AccountName ?? "Unknown")</td>
+                                    <td>@article.CreatedDate?.ToString("MMM dd, yyyy")</td>
+                                    <td>
+                                        @if (article.NewsStatus == true)
+                                        {
+                                            <span class="badge bg-success">Active</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">Inactive</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <button type="button" class="btn btn-sm btn-outline-info open-detail-modal"
+                                                    data-url="@Url.Action("Details", new { id = article.NewsArticleId })"
+                                                    title="View Details">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            @if (canManage)
+                                            {
+                                                <button type="button" class="btn btn-sm btn-outline-warning open-modal"
+                                                        data-url="@Url.Action("Edit", new { id = article.NewsArticleId })"
+                                                        title="Edit">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-outline-danger btn-delete"
+                                                        data-id="@article.NewsArticleId" data-name="@article.NewsTitle"
+                                                        title="Delete">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            }
+                                        </div>
+                                    </td>
                                 </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var article in Model)
-                                {
-                                    <tr>
-                                        <td>
-                                            <div class="text-truncate" style="max-width: 200px;" title="@article.NewsTitle">
-                                                <strong>@article.NewsTitle</strong>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div class="text-truncate" style="max-width: 250px;" title="@article.Headline">
-                                                @article.Headline
-                                            </div>
-                                        </td>
-                                        <td>
-                                            @if (article.Category != null)
-                                            {
-                                                <span class="badge bg-info">@article.Category.CategoryName</span>
-                                            }
-                                            else
-                                            {
-                                                <span class="text-muted">No Category</span>
-                                            }
-                                        </td>
-                                        <td>@(article.CreatedBy?.AccountName ?? "Unknown")</td>
-                                        <td>@article.CreatedDate?.ToString("MMM dd, yyyy")</td>
-                                        <td>
-                                            @if (article.NewsStatus == true)
-                                            {
-                                                <span class="badge bg-success">Active</span>
-                                            }
-                                            else
-                                            {
-                                                <span class="badge bg-secondary">Inactive</span>
-                                            }
-                                        </td>
-                                        <td>
-                                            <div class="btn-group btn-group-sm">
-                                                <a asp-action="Details" asp-route-id="@article.NewsArticleId"
-                                                   class="btn btn-outline-info" title="View Details">
-                                                    <i class="fas fa-eye"></i>
-                                                </a>
-                                                @if (canManage)
-                                                {
-                                                    <button type="button" class="btn btn-outline-warning"
-                                                            title="Edit" onclick="openEditModal('@article.NewsArticleId')">
-                                                        <i class="fas fa-edit"></i>
-                                                    </button>
-                                                    <button type="button" class="btn btn-outline-@(article.NewsStatus == true ? "secondary" : "success")"
-                                                            title="Toggle Status" onclick="toggleStatus('@article.NewsArticleId')">
-                                                        <i class="fas fa-@(article.NewsStatus == true ? "eye-slash" : "eye")"></i>
-                                                    </button>
-                                                    <a asp-action="Delete" asp-route-id="@article.NewsArticleId"
-                                                       class="btn btn-outline-danger" title="Delete"
-                                                       onclick="return confirmDelete('Are you sure you want to delete this article?')">
-                                                        <i class="fas fa-trash"></i>
-                                                    </a>
-                                                }
-                                            </div>
-                                        </td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    </div>
+                            }
+                        </tbody>
+                    </table>
                 </div>
-            </div>
-        </div>
-    }
-    else
-    {
-        <div class="text-center text-muted py-5">
-            <i class="fas fa-newspaper fa-3x mb-3"></i>
-            <h5>No News Articles Found</h5>
-            @if (!string.IsNullOrEmpty(ViewBag.SearchTerm))
-            {
-                <p>No articles match your search criteria. <a asp-action="Index">Show all articles</a></p>
-            }
-            else if (isMyArticles)
-            {
-                <p>You haven't created any articles yet. <button type="button" class="btn btn-link p-0" data-bs-toggle="modal" data-bs-target="#articleModal" onclick="openCreateModal()">Create your first article</button></p>
             }
             else
             {
-                <p>No news articles have been published yet.</p>
+                <div class="text-center text-muted py-5">
+                    <i class="fas fa-newspaper fa-3x mb-3"></i>
+                    <h5>No News Articles Found</h5>
+                    @if (!string.IsNullOrEmpty(ViewBag.SearchTerm))
+                    {
+                        <p>No articles match your search criteria. <a asp-action="Index">Show all articles</a></p>
+                    }
+                    else if (isMyArticles)
+                    {
+                        <p>You haven't created any articles yet. <button type="button" class="btn btn-link p-0" id="createBtnEmpty">Create your first article</button></p>
+                    }
+                    else
+                    {
+                        <p>No news articles have been created yet.</p>
+                    }
+                </div>
             }
         </div>
-    }
+    </div>
 </div>
 
-<!-- Article Modal for Cre  ate/Edit -->
-<div class="modal fade" id="articleModal" tabindex="-1" aria-labelledby="articleModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl">
+<!-- Details Modal -->
+<div class="modal fade" id="detailModal" tabindex="-1" role="dialog" aria-labelledby="detailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="articleModalLabel">
-                    <i class="fas fa-newspaper me-2"></i>
-                    <span id="modalTitle">Create News Article</span>
-                </h5>
+                <h5 class="modal-title" id="detailModalLabel">Article Details</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form id="articleForm">
-                <div class="modal-body">
-                    <input type="hidden" id="articleId" name="NewsArticleId" />
+            <div class="modal-body" id="detailModalBody">
+                <!-- Article details loads here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
 
-                    <div class="row">
-                        <div class="col-md-8">
-                            <div class="mb-3">
-                                <label for="newsTitle" class="form-label">Article Title *</label>
-                                <input type="text" class="form-control" id="newsTitle" name="NewsTitle"
-                                       maxlength="400" required>
-                                <div class="invalid-feedback"></div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                <label for="categoryId" class="form-label">Category *</label>
-                                <select class="form-select" id="categoryId" name="CategoryId" required>
-                                    <option value="">Select Category</option>
-                                    @foreach (var category in categories.Where(c => c.IsActive == true))
-                                    {
-                                        <option value="@category.CategoryId">@category.CategoryName</option>
-                                    }
-                                </select>
-                                <div class="invalid-feedback"></div>
-                            </div>
-                        </div>
-                    </div>
+<!-- Article Modal for Create/Edit -->
+<div class="modal fade" id="articleModal" tabindex="-1" role="dialog" aria-labelledby="articleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="articleModalLabel">Article</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Partial view loads here -->
+            </div>
+            <div class="modal-footer">
+                <button type="submit" form="articleForm" class="btn btn-primary">Save</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
 
-                    <div class="mb-3">
-                        <label for="headline" class="form-label">Headline *</label>
-                        <input type="text" class="form-control" id="headline" name="Headline"
-                               maxlength="150" required>
-                        <div class="form-text">Brief summary of the article (max 150 characters)</div>
-                        <div class="invalid-feedback"></div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="newsContent" class="form-label">Content *</label>
-                        <textarea class="form-control" id="newsContent" name="NewsContent"
-                                  rows="8" maxlength="4000" required></textarea>
-                        <div class="form-text">Main article content (max 4000 characters)</div>
-                        <div class="invalid-feedback"></div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="newsSource" class="form-label">Source</label>
-                                <input type="text" class="form-control" id="newsSource" name="NewsSource"
-                                       maxlength="400" placeholder="Source or reference URL">
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Tags</label>
-                                <div class="border rounded p-2" style="max-height: 120px; overflow-y: auto;">
-                                    @{
-                                        var tags = ViewBag.Tags as List<Tag> ?? new List<Tag>();
-                                    }
-                                    @foreach (var tag in tags)
-                                    {
-                                        <div class="form-check form-check-inline">
-                                            <input class="form-check-input" type="checkbox"
-                                                   name="selectedTags" value="@tag.TagId" id="tag_@tag.TagId">
-                                            <label class="form-check-label" for="tag_@tag.TagId">
-                                                @tag.TagName
-                                            </label>
-                                        </div>
-                                    }
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="mb-3">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="newsStatus" name="NewsStatus" checked>
-                            <label class="form-check-label" for="newsStatus">
-                                Publish Article (Active)
-                            </label>
-                        </div>
-                    </div>
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Deletion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Warning!</strong> This action cannot be undone.
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        <i class="fas fa-times me-1"></i>Cancel
-                    </button>
-                    <button type="submit" class="btn btn-primary" id="saveButton">
-                        <i class="fas fa-save me-1"></i>
-                        <span id="saveButtonText">Create Article</span>
-                    </button>
-                </div>
-            </form>
+                Are you sure you want to delete <strong id="deleteArticleName"></strong>?
+                <input type="hidden" id="deleteArticleId" />
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" id="confirmDeleteBtn" class="btn btn-danger">Delete</button>
+            </div>
         </div>
     </div>
 </div>
 
 @section Scripts {
     <script>
-        let isEditMode = false;
-
-        // Initialize DataTable for list view
-        $(document).ready(function() {
+        $(document).ready(function () {
+            // Initialize DataTable
             if ($('#articlesTable').length > 0) {
                 $('#articlesTable').DataTable({
-                    "order": [[ 4, "desc" ]], // Sort by created date descending
+                    "order": [[ 5, "desc" ]], // Sort by created date descending
                     "pageLength": 25,
                     "responsive": true,
                     "language": {
@@ -439,191 +260,144 @@
                     }
                 });
             }
-        });
 
-        // Toggle between grid and list view
-        function toggleView(viewType) {
-            const gridView = document.getElementById('gridView');
-            const listView = document.getElementById('listView');
-            const buttons = document.querySelectorAll('.btn-group button');
-
-            buttons.forEach(btn => btn.classList.remove('active'));
-
-            if (viewType === 'grid') {
-                gridView.classList.remove('d-none');
-                listView.classList.add('d-none');
-                document.querySelector('button[onclick="toggleView(\'grid\')"]').classList.add('active');
-            } else {
-                gridView.classList.add('d-none');
-                listView.classList.remove('d-none');
-                document.querySelector('button[onclick="toggleView(\'list\')"]').classList.add('active');
-
-                // Reinitialize DataTable if needed
-                if ($.fn.DataTable.isDataTable('#articlesTable')) {
-                    $('#articlesTable').DataTable().responsive.recalc();
-                }
-            }
-        }
-
-        // Open create modal
-        function openCreateModal() {
-            isEditMode = false;
-            document.getElementById('modalTitle').textContent = 'Create News Article';
-            document.getElementById('saveButtonText').textContent = 'Create Article';
-            document.getElementById('articleForm').reset();
-            document.getElementById('articleId').value = '';
-            document.getElementById('newsStatus').checked = true;
-            clearValidation();
-        }
-
-        // Open edit modal
-        async function openEditModal(articleId) {
-            isEditMode = true;
-            document.getElementById('modalTitle').textContent = 'Edit News Article';
-            document.getElementById('saveButtonText').textContent = 'Update Article';
-
-            try {
-                showLoading();
-                const response = await fetch(`/NewsArticle/GetArticleData?id=${articleId}`);
-                const result = await response.json();
-
-                if (result.success) {
-                    const data = result.data;
-                    document.getElementById('articleId').value = data.newsArticleId;
-                    document.getElementById('newsTitle').value = data.newsTitle || '';
-                    document.getElementById('headline').value = data.headline || '';
-                    document.getElementById('newsContent').value = data.newsContent || '';
-                    document.getElementById('newsSource').value = data.newsSource || '';
-                    document.getElementById('categoryId').value = data.categoryId || '';
-                    document.getElementById('newsStatus').checked = data.newsStatus;
-
-                    // Set selected tags
-                    const tagCheckboxes = document.querySelectorAll('input[name="selectedTags"]');
-                    tagCheckboxes.forEach(cb => {
-                        cb.checked = data.tagIds && data.tagIds.includes(parseInt(cb.value));
-                    });
-
-                    var modal = new bootstrap.Modal(document.getElementById('articleModal'));
-                    modal.show();
-                } else {
-                    showAlert('danger', result.message);
-                }
-            } catch (error) {
-                showAlert('danger', 'Failed to load article data.');
-                console.error('Error:', error);
-            } finally {
-                hideLoading();
-            }
-        }
-
-        // Handle form submission
-               document.getElementById('articleForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-
-            const formData = new FormData(this);
-
-            const selectedTags = Array.from(document.querySelectorAll('input[name="selectedTags"]:checked'))
-                                     .map(cb => parseInt(cb.value));
-
-            console.log('Selected tags:', selectedTags); 
-
-            const data = {
-                NewsArticleId: formData.get('NewsArticleId') || '',
-                NewsTitle: formData.get('NewsTitle'),
-                Headline: formData.get('Headline'),
-                NewsContent: formData.get('NewsContent'),
-                NewsSource: formData.get('NewsSource'),
-                CategoryId: formData.get('CategoryId') ? parseInt(formData.get('CategoryId')) : null,
-                NewsStatus: document.getElementById('newsStatus').checked, 
-                SelectedTags: selectedTags 
-            };
-
-            console.log('Sending data:', data); 
-
-            try {
-                showLoading();
-                const url = isEditMode ? '/NewsArticle/EditModal' : '/NewsArticle/CreateModal';
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
-                    },
-                    body: JSON.stringify(data)
+            // Check if there's an articleId parameter in URL to auto-open details
+            const urlParams = new URLSearchParams(window.location.search);
+            const articleId = urlParams.get('articleId');
+            if (articleId) {
+                // Auto-open the article details modal
+                $.get('@Url.Action("Details")/' + articleId, function (data) {
+                    $('#detailModalBody').html(data);
+                    $('#detailModal').modal('show');
+                }).fail(function() {
+                    showAlert('warning', 'Article not found or not accessible.');
                 });
 
-                const result = await response.json();
-
-                if (result.success) {
-                    var modal = bootstrap.Modal.getInstance(document.getElementById('articleModal'));
-                    modal.hide();
-
-                    showAlert('success', result.message);
-                    setTimeout(() => window.location.reload(), 1500);
-                } else {
-                    showAlert('danger', result.message);
-                    if (result.errors) {
-                        displayValidationErrors(result.errors);
-                    }
-                }
-            } catch (error) {
-                showAlert('danger', 'An error occurred while saving the article.');
-                console.error('Error:', error);
-            } finally {
-                hideLoading();
-            }
-        });
-
-        // Toggle article status
-        async function toggleStatus(articleId) {
-            if (!confirm('Are you sure you want to change the status of this article?')) {
-                return;
+                // Clean up URL without reloading
+                const newUrl = window.location.pathname;
+                window.history.replaceState({}, document.title, newUrl);
             }
 
-            try {
-                showLoading();
-                const response = await fetch('/NewsArticle/ToggleStatus', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
-                    },
-                    body: JSON.stringify(articleId)
+            // Open Details modal
+            $(document).on('click', '.open-detail-modal', function () {
+                const url = $(this).data('url');
+                $.get(url, function (data) {
+                    $('#detailModalBody').html(data);
+                    $('#detailModal').modal('show');
                 });
-
-                const result = await response.json();
-
-                if (result.success) {
-                    showAlert('success', result.message);
-                    setTimeout(() => window.location.reload(), 1500);
-                } else {
-                    showAlert('danger', result.message);
-                }
-            } catch (error) {
-                showAlert('danger', 'Failed to update article status.');
-                console.error('Error:', error);
-            } finally {
-                hideLoading();
-            }
-        }
-
-        // Utility functions
-        function clearValidation() {
-            document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
-            document.querySelectorAll('.invalid-feedback').forEach(el => el.textContent = '');
-        }
-
-        function displayValidationErrors(errors) {
-            clearValidation();
-            errors.forEach(error => {
-                showAlert('warning', error);
             });
+
+            // Open Create modal
+            $('#createBtn, #createBtnEmpty').click(function () {
+                $.get('@Url.Action("Create")', function (data) {
+                    $('#modalBody').html(data);
+                    $('#articleModal').modal('show');
+                });
+            });
+
+            // Open Edit modal
+            $(document).on('click', '.open-modal', function () {
+                const url = $(this).data('url');
+                showLoading();
+
+                $.get(url, function (data) {
+                    $('#modalBody').html(data);
+                    $('#articleModalLabel').text('Edit Article');
+                    $('#articleModal').modal('show');
+                    hideLoading();
+                }).fail(function(xhr, status, error) {
+                    hideLoading();
+                    let errorMessage = 'Failed to load article for editing.';
+                    if (xhr.responseText) {
+                        errorMessage = xhr.responseText;
+                    }
+                    showAlert('danger', errorMessage);
+                });
+            });
+
+            // Handle delete button click
+            $(document).on('click', '.btn-delete', function () {
+                const articleId = $(this).data('id');
+                const articleName = $(this).data('name');
+                $('#deleteArticleId').val(articleId);
+                $('#deleteArticleName').text(articleName);
+                const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+                modal.show();
+            });
+
+            // Handle confirm delete
+            $('#confirmDeleteBtn').click(function () {
+                const id = $('#deleteArticleId').val();
+                $.ajax({
+                    url: '/NewsArticle/DeleteConfirmed/' + id,
+                    type: 'POST',
+                    headers: {
+                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function (response) {
+                        if (response.success) {
+                            $('#deleteModal').modal('hide');
+                            showAlert('success', 'Article deleted successfully!');
+                            setTimeout(() => location.reload(), 1500);
+                        } else {
+                            showAlert('danger', response.message || "Delete failed.");
+                        }
+                    },
+                    error: function () {
+                        showAlert('danger', "Error deleting article.");
+                    }
+                });
+            });
+
+            // Handle form submission inside modal (Create/Edit)
+            $(document).on('submit', '#articleForm', function (e) {
+                e.preventDefault();
+                var form = $(this);
+                showLoading();
+
+                $.ajax({
+                    type: form.attr('method'),
+                    url: form.attr('action'),
+                    data: form.serialize(),
+                    success: function (response) {
+                        hideLoading();
+                        if (response.success) {
+                            $('#articleModal').modal('hide');
+                            showAlert('success', 'Article saved successfully!');
+                            setTimeout(() => location.reload(), 1500);
+                        } else {
+                            $('#modalBody').html(response); // Show validation errors
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        hideLoading();
+                        let errorMessage = 'An error occurred while saving the article.';
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMessage = xhr.responseJSON.message;
+                        }
+                        showAlert('danger', errorMessage);
+                    }
+                });
+            });
+
+        // Add loading functions
+        function showLoading() {
+            if ($('#loadingSpinner').length === 0) {
+                $('body').append('<div id="loadingSpinner" class="position-fixed top-50 start-50 translate-middle" style="z-index: 9999;"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>');
+            }
+            $('#loadingSpinner').removeClass('d-none');
         }
 
+        function hideLoading() {
+            $('#loadingSpinner').addClass('d-none');
+        }
+        });
+
+        // Utility function to show alerts
         function showAlert(type, message) {
             const alertHtml = `
                 <div class="alert alert-${type} alert-dismissible fade show" role="alert">
-                    <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'danger' ? 'exclamation-circle' : 'exclamation-triangle'} me-2"></i>
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'} me-2"></i>
                     ${message}
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
@@ -640,29 +414,5 @@
                 }
             }, 5000);
         }
-
-        // Character count for textareas
-        function updateCharCount(textarea, maxLength) {
-            const remaining = maxLength - textarea.value.length;
-            const counter = textarea.parentNode.querySelector('.char-counter');
-            if (counter) {
-                counter.textContent = `${remaining} characters remaining`;
-                counter.className = `char-counter ${remaining < 100 ? 'text-warning' : 'text-muted'}`;
-            }
-        }
-
-        // Add character counters to textareas
-        document.addEventListener('DOMContentLoaded', function() {
-            const textareas = document.querySelectorAll('textarea[maxlength]');
-            textareas.forEach(textarea => {
-                const maxLength = parseInt(textarea.getAttribute('maxlength'));
-                const counter = document.createElement('div');
-                counter.className = 'char-counter text-muted small';
-                counter.textContent = `${maxLength} characters remaining`;
-                textarea.parentNode.appendChild(counter);
-
-                textarea.addEventListener('input', () => updateCharCount(textarea, maxLength));
-            });
-        });
     </script>
 }
