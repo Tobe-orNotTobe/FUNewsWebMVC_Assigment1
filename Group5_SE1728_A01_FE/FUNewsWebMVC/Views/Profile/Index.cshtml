@@ -1,31 +1,35 @@
 ﻿@model SystemAccount
 @{
     ViewData["Title"] = "My Profile";
+    var isStaff = Model.AccountRole == 1;
+    var isLecturer = Model.AccountRole == 2;
 }
 
 <div class="container-fluid">
+    <!-- Notice about profile limitations -->
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle me-2"></i>
+        <strong>Database Integration:</strong> Your profile changes will be permanently saved to the database.
+        Keep your information accurate and up to date.
+    </div>
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h2>
                 <i class="fas fa-user-circle me-2"></i>
                 My Profile
             </h2>
-            <p class="text-muted mb-0">Manage your personal information</p>
+            <p class="text-muted mb-0">Manage your personal information and account settings</p>
         </div>
         <div>
             <button type="button" class="btn btn-warning me-2" id="editProfileBtn">
                 <i class="fas fa-edit me-1"></i>
                 Edit Profile
             </button>
-            <button type="button" class="btn btn-outline-secondary" id="changePasswordBtn">
-                <i class="fas fa-key me-1"></i>
-                Change Password
-            </button>
         </div>
     </div>
 
-    <!-- Profile Information Card -->
     <div class="row">
+        <!-- Profile Information Card -->
         <div class="col-md-8">
             <div class="card">
                 <div class="card-header">
@@ -48,7 +52,7 @@
                             <strong>Name:</strong>
                         </div>
                         <div class="col-sm-9">
-                            @Model.AccountName
+                            <span class="h6">@Model.AccountName</span>
                         </div>
                     </div>
                     <div class="row mb-3">
@@ -56,6 +60,7 @@
                             <strong>Email:</strong>
                         </div>
                         <div class="col-sm-9">
+                            <i class="fas fa-envelope me-2 text-muted"></i>
                             @Model.AccountEmail
                         </div>
                     </div>
@@ -64,23 +69,84 @@
                             <strong>Role:</strong>
                         </div>
                         <div class="col-sm-9">
-                            @switch (Model.AccountRole)
+                            @if (isStaff)
                             {
-                                case 1:
-                                    <span class="badge bg-warning">Staff</span>
-                                    break;
-                                case 2:
-                                    <span class="badge bg-info">Lecturer</span>
-                                    break;
-                                default:
-                                    <span class="badge bg-secondary">Unknown</span>
-                                    break;
+                                <span class="badge bg-warning text-dark fs-6">Staff</span>
+                                <div class="small text-muted mt-1">
+                                    Can manage categories, news articles, and tags
+                                </div>
                             }
+                            else if (isLecturer)
+                            {
+                                <span class="badge bg-info fs-6">Lecturer</span>
+                                <div class="small text-muted mt-1">
+                                    Can view and create news articles
+                                </div>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary fs-6">Unknown</span>
+                            }
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-3">
+                            <strong>Account Status:</strong>
+                        </div>
+                        <div class="col-sm-9">
+                            <span class="badge bg-success">Active</span>
                         </div>
                     </div>
                 </div>
             </div>
+
+            @if (isStaff)
+            {
+                <!-- Quick Actions for Staff -->
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-tools me-2"></i>
+                            Quick Actions
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <a asp-controller="NewsArticle" asp-action="Index" asp-route-filter="my-articles"
+                                   class="btn btn-outline-primary w-100">
+                                    <i class="fas fa-newspaper me-2"></i>
+                                    My Articles
+                                </a>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <a asp-controller="Category" asp-action="Index"
+                                   class="btn btn-outline-success w-100">
+                                    <i class="fas fa-folder me-2"></i>
+                                    Manage Categories
+                                </a>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <a asp-controller="Tag" asp-action="Index"
+                                   class="btn btn-outline-info w-100">
+                                    <i class="fas fa-tags me-2"></i>
+                                    Manage Tags
+                                </a>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <a asp-controller="NewsArticle" asp-action="Index"
+                                   class="btn btn-outline-warning w-100">
+                                    <i class="fas fa-plus me-2"></i>
+                                    Create Article
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
         </div>
+
+        <!-- Statistics and Info Card -->
         <div class="col-md-4">
             <div class="card">
                 <div class="card-header">
@@ -90,30 +156,79 @@
                     </h5>
                 </div>
                 <div class="card-body">
-                    @if (Model.AccountRole == 1) // Staff
+                    @if (isStaff)
                     {
                         <div class="text-center mb-3">
                             <div class="h4 mb-0 text-primary">
-                                @(Model.NewsArticles?.Count ?? 0)
+                                <i class="fas fa-newspaper fa-2x"></i>
                             </div>
-                            <small class="text-muted">Articles Created</small>
+                            <div class="h5 mt-2 mb-0 text-primary">Articles Created</div>
+                            <small class="text-muted">Click "My Articles" to view</small>
                         </div>
-                        <div class="text-center">
-                            <a asp-controller="NewsArticle" asp-action="Index" asp-route-filter="my-articles" class="btn btn-outline-primary btn-sm">
-                                <i class="fas fa-newspaper me-1"></i>
+                        <div class="text-center mb-3">
+                            <a asp-controller="NewsArticle" asp-action="Index" asp-route-filter="my-articles"
+                               class="btn btn-primary btn-sm w-100">
+                                <i class="fas fa-eye me-1"></i>
                                 View My Articles
                             </a>
+                        </div>
+                        <hr>
+                        <div class="small text-muted">
+                            <h6>Your Permissions:</h6>
+                            <ul class="mb-0">
+                                <li>Manage news articles</li>
+                                <li>Manage categories</li>
+                                <li>Manage tags</li>
+                                <li>Manage your profile</li>
+                            </ul>
+                        </div>
+                    }
+                    else if (isLecturer)
+                    {
+                        <div class="text-center mb-3">
+                            <i class="fas fa-graduation-cap fa-3x text-info mb-3"></i>
+                            <h6>Lecturer Account</h6>
+                            <small class="text-muted">Academic staff member</small>
+                        </div>
+                        <hr>
+                        <div class="small text-muted">
+                            <h6>Your Permissions:</h6>
+                            <ul class="mb-0">
+                                <li>View news articles</li>
+                                <li>Create news articles</li>
+                                <li>Edit your profile</li>
+                            </ul>
                         </div>
                     }
                     else
                     {
                         <div class="text-center">
-                            <div class="text-muted">
-                                <i class="fas fa-graduation-cap fa-2x mb-2"></i>
-                                <p>Lecturer Account</p>
-                            </div>
+                            <i class="fas fa-user fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">Contact administrator for role assignment</p>
                         </div>
                     }
+                </div>
+            </div>
+
+            <!-- Security Information -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-shield-alt me-2"></i>
+                        Security
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button type="button" class="btn btn-outline-warning btn-sm" id="changePasswordBtn2">
+                            <i class="fas fa-key me-1"></i>
+                            Change Password
+                        </button>
+                    </div>
+                    <div class="small text-muted mt-2">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Regular password changes improve security
+                    </div>
                 </div>
             </div>
         </div>
@@ -125,14 +240,20 @@
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="profileModalLabel">Edit Profile</h5>
+                <h5 class="modal-title" id="profileModalLabel">
+                    <i class="fas fa-user-edit me-2"></i>
+                    Edit Profile
+                </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body" id="modalBody">
                 <!-- Partial view loads here -->
             </div>
             <div class="modal-footer">
-                <button type="submit" form="profileForm" class="btn btn-primary">Save Changes</button>
+                <button type="submit" form="profileForm" class="btn btn-primary">
+                    <i class="fas fa-save me-1"></i>
+                    Save Changes
+                </button>
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
             </div>
         </div>
@@ -144,14 +265,20 @@
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="passwordModalLabel">Change Password</h5>
+                <h5 class="modal-title" id="passwordModalLabel">
+                    <i class="fas fa-key me-2"></i>
+                    Change Password
+                </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body" id="passwordModalBody">
                 <!-- Partial view loads here -->
             </div>
             <div class="modal-footer">
-                <button type="submit" form="changePasswordForm" class="btn btn-primary">Change Password</button>
+                <button type="submit" form="changePasswordForm" class="btn btn-primary">
+                    <i class="fas fa-key me-1"></i>
+                    Change Password
+                </button>
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
             </div>
         </div>
@@ -175,7 +302,7 @@
             });
 
             // Open Change Password modal
-            $('#changePasswordBtn').click(function () {
+            $('#changePasswordBtn, #changePasswordBtn2').click(function () {
                 showLoading();
                 $.get('@Url.Action("ChangePassword")', function (data) {
                     $('#passwordModalBody').html(data);
@@ -204,7 +331,11 @@
                             showAlert('success', 'Profile updated successfully!');
                             setTimeout(() => location.reload(), 1500);
                         } else {
-                            $('#modalBody').html(response);
+                            if (response.message) {
+                                showAlert('danger', response.message);
+                            } else {
+                                $('#modalBody').html(response);
+                            }
                         }
                     },
                     error: function () {
@@ -229,6 +360,12 @@
                         if (response.success) {
                             $('#passwordModal').modal('hide');
                             showAlert('success', response.message || 'Password changed successfully!');
+                            // Note: User might need to log in again with new password
+                            if (response.message && response.message.includes('log in again')) {
+                                setTimeout(() => {
+                                    window.location.href = '@Url.Action("Logout", "Auth")';
+                                }, 2000);
+                            }
                         } else {
                             if (response.message) {
                                 showAlert('danger', response.message);

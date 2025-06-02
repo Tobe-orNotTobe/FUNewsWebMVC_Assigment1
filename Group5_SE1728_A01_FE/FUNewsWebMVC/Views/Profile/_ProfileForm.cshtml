@@ -6,55 +6,237 @@
     <input type="hidden" asp-for="AccountId" />
     <input type="hidden" asp-for="AccountRole" />
 
-    <div class="form-group mb-3">
-        <label asp-for="AccountName" class="form-label">Full Name *</label>
-        <input asp-for="AccountName" class="form-control" maxlength="100" required />
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle me-2"></i>
+        <strong>Profile Information:</strong> Keep your profile information up to date for better system communication.
+    </div>
+
+    <div class="form-group mb-4">
+        <label asp-for="AccountName" class="form-label">
+            <i class="fas fa-user me-2"></i>Full Name *
+        </label>
+        <input asp-for="AccountName" class="form-control form-control-lg" maxlength="100" required 
+               placeholder="Enter your full name" />
         <span asp-validation-for="AccountName" class="text-danger"></span>
-        <div class="form-text">Your full name as it will appear in the system</div>
+        <div class="form-text">Your full name as it will appear throughout the system</div>
     </div>
 
-    <div class="form-group mb-3">
-        <label asp-for="AccountEmail" class="form-label">Email Address *</label>
-        <input asp-for="AccountEmail" class="form-control" type="email" maxlength="70" required />
+    <div class="form-group mb-4">
+        <label asp-for="AccountEmail" class="form-label">
+            <i class="fas fa-envelope me-2"></i>Email Address *
+        </label>
+        <input asp-for="AccountEmail" class="form-control form-control-lg" type="email" maxlength="70" required 
+               placeholder="Enter your email address" />
         <span asp-validation-for="AccountEmail" class="text-danger"></span>
-        <div class="form-text">Your email address for login and notifications</div>
+        <div class="form-text">Your email address for login and system notifications</div>
     </div>
 
-    <div class="form-group mb-3">
-        <label asp-for="AccountPassword" class="form-label">Password *</label>
-        <input asp-for="AccountPassword" class="form-control" type="password" maxlength="70" required />
+    <div class="form-group mb-4">
+        <label asp-for="AccountPassword" class="form-label">
+            <i class="fas fa-lock me-2"></i>Password *
+        </label>
+        <div class="input-group">
+            <input asp-for="AccountPassword" class="form-control form-control-lg" type="password" maxlength="70" required 
+                   placeholder="Enter your current password or a new one" />
+            <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                <i class="fas fa-eye" id="passwordIcon"></i>
+            </button>
+        </div>
         <span asp-validation-for="AccountPassword" class="text-danger"></span>
-        <div class="form-text">Enter your current password or a new one (minimum 6 characters)</div>
+        <div class="form-text">
+            Enter your current password to confirm changes, or enter a new password to update it
+            <br><small class="text-muted">(Minimum 6 characters, maximum 70 characters)</small>
+        </div>
     </div>
 
-    <!-- Read-only fields -->
-    <div class="row mt-4 pt-3 border-top bg-light rounded p-3">
+    <!-- Read-only Account Information -->
+    <div class="row mt-4 pt-4 border-top">
+        <div class="col-md-12">
+            <h6 class="text-muted mb-3">
+                <i class="fas fa-info-circle me-2"></i>
+                Account Information (Read-Only)
+            </h6>
+        </div>
         <div class="col-md-6">
-            <div class="mb-2">
-                <strong>Account ID:</strong>
-                <code>@Model.AccountId</code>
+            <div class="mb-3 p-3 bg-light rounded">
+                <div class="mb-2">
+                    <strong>Account ID:</strong>
+                    <code class="ms-2">@Model.AccountId</code>
+                </div>
+                <div class="mb-2">
+                    <strong>Role:</strong>
+                    @switch (Model.AccountRole)
+                    {
+                        case 1:
+                            <span class="badge bg-warning text-dark ms-2">Staff</span>
+                            break;
+                        case 2:
+                            <span class="badge bg-info ms-2">Lecturer</span>
+                            break;
+                        default:
+                            <span class="badge bg-secondary ms-2">Unknown</span>
+                            break;
+                    }
+                </div>
+                <div class="mb-0">
+                    <strong>Account Status:</strong>
+                    <span class="badge bg-success ms-2">Active</span>
+                </div>
             </div>
-            <div class="mb-2">
-                <strong>Role:</strong>
-                @switch (Model.AccountRole)
+        </div>
+        <div class="col-md-6">
+            <div class="p-3 bg-light rounded">
+                <h6 class="text-muted mb-2">Role Permissions:</h6>
+                @if (Model.AccountRole == 1)
                 {
-                    case 1:
-                        <span class="badge bg-warning">Staff</span>
-                        break;
-                    case 2:
-                        <span class="badge bg-info">Lecturer</span>
-                        break;
-                    default:
-                        <span class="badge bg-secondary">Unknown</span>
-                        break;
+                    <ul class="small mb-0">
+                        <li>Manage news articles</li>
+                        <li>Manage categories</li>
+                        <li>Manage tags</li>
+                        <li>Manage your profile</li>
+                    </ul>
+                }
+                else if (Model.AccountRole == 2)
+                {
+                    <ul class="small mb-0">
+                        <li>View news articles</li>
+                        <li>Create news articles</li>
+                        <li>Edit personal profile</li>
+                    </ul>
+                }
+                else
+                {
+                    <p class="small text-muted mb-0">Contact administrator for role assignment</p>
                 }
             </div>
         </div>
-        <div class="col-md-6">
-            <div class="small text-muted">
-                <i class="fas fa-info-circle me-1"></i>
-                Your Account ID and Role cannot be changed. Contact an administrator if you need to modify these fields.
-            </div>
-        </div>
+    </div>
+
+    <div class="alert alert-warning mt-3">
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        <strong>Important Notes:</strong>
+        <ul class="mb-0 mt-2">
+            <li>Your Account ID and Role cannot be changed through this form</li>
+            <li>Contact an administrator if you need role modifications</li>
+            <li>Changing your email will affect your login credentials</li>
+            <li>If you change your password here, use the new password for future logins</li>
+        </ul>
     </div>
 </form>
+
+<script>
+    $(document).ready(function() {
+        // Password visibility toggle
+        $('#togglePassword').click(function() {
+            const passwordField = $('#AccountPassword');
+            const passwordIcon = $('#passwordIcon');
+            
+            if (passwordField.attr('type') === 'password') {
+                passwordField.attr('type', 'text');
+                passwordIcon.removeClass('fa-eye').addClass('fa-eye-slash');
+            } else {
+                passwordField.attr('type', 'password');
+                passwordIcon.removeClass('fa-eye-slash').addClass('fa-eye');
+            }
+        });
+
+        // Character counters
+        function addCharacterCounter(selector, maxLength) {
+            const element = $('#profileModal').find(selector);
+            if (element.length > 0) {
+                const counter = $('<div class="text-muted small mt-1"></div>');
+                element.parent().append(counter);
+
+                function updateCounter() {
+                    const remaining = maxLength - element.val().length;
+                    counter.text(`${remaining} characters remaining`);
+                    counter.removeClass('text-warning text-danger').addClass('text-muted');
+
+                    if (remaining < 20) {
+                        counter.removeClass('text-muted').addClass('text-warning');
+                    }
+                    if (remaining < 10) {
+                        counter.removeClass('text-warning').addClass('text-danger');
+                    }
+                }
+
+                element.on('input', updateCounter);
+                updateCounter();
+            }
+        }
+
+        // Add character counters
+        addCharacterCounter('#AccountName', 100);
+        addCharacterCounter('#AccountEmail', 70);
+        addCharacterCounter('#AccountPassword', 70);
+
+        // Email validation
+        $('#AccountEmail').on('blur', function() {
+            const email = $(this).val();
+            const emailRegex =  /^[^\s@@]+@@[^\s@@]+\.[^\s@@]+$/;
+            
+            if (email && !emailRegex.test(email)) {
+                $(this).addClass('is-invalid');
+                $(this).next('.text-danger').text('Please enter a valid email address.');
+            } else {
+                $(this).removeClass('is-invalid');
+            }
+        });
+
+        // Real-time validation feedback
+        $('#AccountName').on('input', function() {
+            const name = $(this).val().trim();
+            if (name.length < 2) {
+                $(this).addClass('is-invalid');
+            } else {
+                $(this).removeClass('is-invalid');
+            }
+        });
+
+        $('#AccountPassword').on('input', function() {
+            const password = $(this).val();
+            if (password.length > 0 && password.length < 6) {
+                $(this).addClass('is-invalid');
+            } else {
+                $(this).removeClass('is-invalid');
+            }
+        });
+
+        // Form validation
+        $('#profileModal').on('submit', '#profileForm', function(e) {
+            let isValid = true;
+            const modalContext = $('#profileModal');
+
+            // Clear previous validation states
+            modalContext.find('.is-invalid').removeClass('is-invalid');
+
+            // Validate name
+            const nameField = modalContext.find('#AccountName');
+            if (!nameField.val().trim() || nameField.val().trim().length < 2) {
+                isValid = false;
+                nameField.addClass('is-invalid');
+            }
+
+            // Validate email
+            const emailField = modalContext.find('#AccountEmail');
+            const emailRegex =  /^[^\s@@]+@@[^\s@@]+\.[^\s@@]+$/;
+            if (!emailField.val().trim() || !emailRegex.test(emailField.val())) {
+                isValid = false;
+                emailField.addClass('is-invalid');
+            }
+
+            // Validate password
+            const passwordField = modalContext.find('#AccountPassword');
+            if (!passwordField.val() || passwordField.val().length < 6 || passwordField.val().length > 70) {
+                isValid = false;
+                passwordField.addClass('is-invalid');
+            }
+
+            if (!isValid) {
+                e.preventDefault();
+                showAlert('warning', 'Please correct the highlighted fields before saving.');
+                return false;
+            }
+        });
+    });
+</script>
