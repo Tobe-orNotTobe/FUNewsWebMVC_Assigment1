@@ -6,8 +6,8 @@ namespace FUNewsWebMVC.Services.Interfaces
 	{
 		Task<List<NewsArticle>> GetNewsArticlesAsync();
 		Task<NewsArticle?> GetNewsArticleByIdAsync(string id);
-		Task<bool> CreateNewsArticleAsync(NewsArticle article);
-		Task<bool> UpdateNewsArticleAsync(NewsArticle article);
+		Task<bool> CreateNewsArticleAsync(NewsArticle article, List<int>? selectedTags = null);
+		Task<bool> UpdateNewsArticleAsync(NewsArticle article, List<int>? selectedTags = null);
 		Task<bool> DeleteNewsArticleAsync(string id);
 		Task<List<NewsArticle>> SearchNewsArticlesAsync(string searchTerm);
 		Task<List<NewsArticle>> GetMyArticlesAsync(short createdById);

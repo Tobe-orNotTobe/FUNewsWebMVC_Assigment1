@@ -34,20 +34,10 @@ namespace FUNewsWebMVC.Services
 				_logger.LogInformation($"Successfully fetched {result?.Value?.Count ?? 0} news articles");
 				return result?.Value ?? new List<NewsArticle>();
 			}
-			catch (HttpRequestException httpEx)
-			{
-				_logger.LogError(httpEx, "HTTP error while fetching news articles");
-				throw new Exception("Failed to connect to the news service. Please check your connection.", httpEx);
-			}
-			catch (JsonException jsonEx)
-			{
-				_logger.LogError(jsonEx, "JSON parsing error while fetching news articles");
-				throw new Exception("Invalid response format from news service.", jsonEx);
-			}
 			catch (Exception ex)
 			{
-				_logger.LogError(ex, "Unexpected error while fetching news articles");
-				throw new Exception("An unexpected error occurred while retrieving news articles.", ex);
+				_logger.LogError(ex, "Error fetching news articles");
+				throw new Exception("Failed to retrieve news articles", ex);
 			}
 		}
 
@@ -78,19 +68,14 @@ namespace FUNewsWebMVC.Services
 				_logger.LogInformation($"Successfully fetched news article: {article?.NewsTitle}");
 				return article;
 			}
-			catch (HttpRequestException httpEx)
-			{
-				_logger.LogError(httpEx, $"HTTP error while fetching news article {id}");
-				throw new Exception($"Failed to retrieve news article with ID {id}. Please try again.", httpEx);
-			}
 			catch (Exception ex)
 			{
 				_logger.LogError(ex, $"Error fetching news article {id}");
-				throw new Exception($"An error occurred while retrieving the news article.", ex);
+				throw new Exception($"Failed to retrieve news article with ID {id}", ex);
 			}
 		}
 
-		public async Task<bool> CreateNewsArticleAsync(NewsArticle article)
+		public async Task<bool> CreateNewsArticleAsync(NewsArticle article, List<int>? selectedTags = null)
 		{
 			if (article == null)
 			{
@@ -99,7 +84,7 @@ namespace FUNewsWebMVC.Services
 
 			try
 			{
-				_logger.LogInformation($"Creating news article: {article.NewsTitle}");
+				_logger.LogInformation($"Creating news article: {article.NewsTitle} with {selectedTags?.Count ?? 0} tags");
 
 				var client = CreateAuthorizedClient();
 
@@ -113,11 +98,28 @@ namespace FUNewsWebMVC.Services
 					article.NewsArticleId = GenerateArticleId();
 				}
 
+				// ✅ SIMPLER APPROACH: Add tags directly to the article
+				if (selectedTags != null && selectedTags.Any())
+				{
+					article.Tags = new List<Tag>();
+					foreach (var tagId in selectedTags)
+					{
+						article.Tags.Add(new Tag { TagId = tagId });
+					}
+				}
+				else
+				{
+					article.Tags = new List<Tag>();
+				}
+
 				var json = JsonConvert.SerializeObject(article, new JsonSerializerSettings
 				{
 					NullValueHandling = NullValueHandling.Ignore,
-					DateFormatHandling = DateFormatHandling.IsoDateFormat
+					DateFormatHandling = DateFormatHandling.IsoDateFormat,
+					ReferenceLoopHandling = ReferenceLoopHandling.Ignore
 				});
+
+				_logger.LogInformation($"Sending JSON: {json}");
 
 				var content = new StringContent(json, Encoding.UTF8, "application/json");
 				var response = await client.PostAsync("NewsArticles", content);
@@ -136,19 +138,14 @@ namespace FUNewsWebMVC.Services
 
 				return success;
 			}
-			catch (HttpRequestException httpEx)
-			{
-				_logger.LogError(httpEx, "HTTP error while creating news article");
-				throw new Exception("Failed to create news article. Please check your connection and try again.", httpEx);
-			}
 			catch (Exception ex)
 			{
 				_logger.LogError(ex, "Error creating news article");
-				throw new Exception("An error occurred while creating the news article.", ex);
+				throw new Exception("Failed to create news article", ex);
 			}
 		}
 
-		public async Task<bool> UpdateNewsArticleAsync(NewsArticle article)
+		public async Task<bool> UpdateNewsArticleAsync(NewsArticle article, List<int>? selectedTags = null)
 		{
 			if (article == null)
 			{
@@ -162,18 +159,35 @@ namespace FUNewsWebMVC.Services
 
 			try
 			{
-				_logger.LogInformation($"Updating news article: {article.NewsArticleId}");
+				_logger.LogInformation($"Updating news article: {article.NewsArticleId} with {selectedTags?.Count ?? 0} tags");
 
 				var client = CreateAuthorizedClient();
 
 				// Set modification metadata
 				article.ModifiedDate = DateTime.Now;
 
+				// ✅ SIMPLER APPROACH: Add tags directly to the article
+				if (selectedTags != null)
+				{
+					article.Tags = new List<Tag>();
+					foreach (var tagId in selectedTags)
+					{
+						article.Tags.Add(new Tag { TagId = tagId });
+					}
+				}
+				else
+				{
+					article.Tags = new List<Tag>();
+				}
+
 				var json = JsonConvert.SerializeObject(article, new JsonSerializerSettings
 				{
 					NullValueHandling = NullValueHandling.Ignore,
-					DateFormatHandling = DateFormatHandling.IsoDateFormat
+					DateFormatHandling = DateFormatHandling.IsoDateFormat,
+					ReferenceLoopHandling = ReferenceLoopHandling.Ignore
 				});
+
+				_logger.LogInformation($"Sending JSON: {json}");
 
 				var content = new StringContent(json, Encoding.UTF8, "application/json");
 				var response = await client.PutAsync($"NewsArticles('{article.NewsArticleId}')", content);
@@ -192,15 +206,10 @@ namespace FUNewsWebMVC.Services
 
 				return success;
 			}
-			catch (HttpRequestException httpEx)
-			{
-				_logger.LogError(httpEx, $"HTTP error while updating news article {article.NewsArticleId}");
-				throw new Exception("Failed to update news article. Please check your connection and try again.", httpEx);
-			}
 			catch (Exception ex)
 			{
 				_logger.LogError(ex, $"Error updating news article {article.NewsArticleId}");
-				throw new Exception("An error occurred while updating the news article.", ex);
+				throw new Exception("Failed to update news article", ex);
 			}
 		}
 
@@ -232,15 +241,10 @@ namespace FUNewsWebMVC.Services
 
 				return success;
 			}
-			catch (HttpRequestException httpEx)
-			{
-				_logger.LogError(httpEx, $"HTTP error while deleting news article {id}");
-				throw new Exception("Failed to delete news article. Please check your connection and try again.", httpEx);
-			}
 			catch (Exception ex)
 			{
 				_logger.LogError(ex, $"Error deleting news article {id}");
-				throw new Exception("An error occurred while deleting the news article.", ex);
+				throw new Exception("Failed to delete news article", ex);
 			}
 		}
 
@@ -372,13 +376,9 @@ namespace FUNewsWebMVC.Services
 			}
 		}
 
-		#region Private Helper Methods
-
 		private static string GenerateArticleId()
 		{
 			return $"ART{DateTime.Now:yyyyMMdd}{DateTime.Now:HHmmss}{new Random().Next(10, 99)}";
 		}
-
-		#endregion
 	}
 }

@@ -163,6 +163,8 @@ namespace FUNewsWebMVC.Controllers
 
 			try
 			{
+				_logger.LogInformation($"Received create request with {request.SelectedTags?.Count ?? 0} tags");
+
 				// Validate required fields
 				var validationErrors = new List<string>();
 
@@ -204,9 +206,11 @@ namespace FUNewsWebMVC.Controllers
 					CreatedDate = DateTime.Now
 				};
 
-				_logger.LogInformation($"Creating article via modal: {article.NewsTitle} by user {userId}");
+				_logger.LogInformation($"Creating article via modal: {article.NewsTitle} by user {userId} with tags: [{string.Join(", ", request.SelectedTags ?? new List<int>())}]");
 
-				var success = await _newsService.CreateNewsArticleAsync(article);
+				// ✅ FIXED: Pass selected tags to service
+				var success = await _newsService.CreateNewsArticleAsync(article, request.SelectedTags ?? new List<int>());
+
 				if (success)
 				{
 					return Json(new { success = true, message = "News article created successfully!" });
@@ -223,7 +227,6 @@ namespace FUNewsWebMVC.Controllers
 			}
 		}
 
-		// ✅ AJAX EDIT MODAL ACTION
 		[HttpPost]
 		public async Task<IActionResult> EditModal([FromBody] EditNewsArticleRequest request)
 		{
@@ -234,6 +237,8 @@ namespace FUNewsWebMVC.Controllers
 
 			try
 			{
+				_logger.LogInformation($"Received edit request for {request.NewsArticleId} with {request.SelectedTags?.Count ?? 0} tags");
+
 				// Validate required fields
 				var validationErrors = new List<string>();
 
@@ -277,9 +282,11 @@ namespace FUNewsWebMVC.Controllers
 				existingArticle.UpdatedById = userId;
 				existingArticle.ModifiedDate = DateTime.Now;
 
-				_logger.LogInformation($"Updating article via modal: {existingArticle.NewsArticleId} by user {userId}");
+				_logger.LogInformation($"Updating article via modal: {existingArticle.NewsArticleId} by user {userId} with tags: [{string.Join(", ", request.SelectedTags ?? new List<int>())}]");
 
-				var success = await _newsService.UpdateNewsArticleAsync(existingArticle);
+				// ✅ FIXED: Pass selected tags to service
+				var success = await _newsService.UpdateNewsArticleAsync(existingArticle, request.SelectedTags ?? new List<int>());
+
 				if (success)
 				{
 					return Json(new { success = true, message = "News article updated successfully!" });

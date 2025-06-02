@@ -313,7 +313,7 @@
     }
 </div>
 
-<!-- Article Modal for Create/Edit -->
+<!-- Article Modal for Cre  ate/Edit -->
 <div class="modal fade" id="articleModal" tabindex="-1" aria-labelledby="articleModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-xl">
         <div class="modal-content">
@@ -517,12 +517,15 @@
         }
 
         // Handle form submission
-        document.getElementById('articleForm').addEventListener('submit', async function(e) {
+               document.getElementById('articleForm').addEventListener('submit', async function(e) {
             e.preventDefault();
 
             const formData = new FormData(this);
+
             const selectedTags = Array.from(document.querySelectorAll('input[name="selectedTags"]:checked'))
                                      .map(cb => parseInt(cb.value));
+
+            console.log('Selected tags:', selectedTags); 
 
             const data = {
                 NewsArticleId: formData.get('NewsArticleId') || '',
@@ -531,9 +534,11 @@
                 NewsContent: formData.get('NewsContent'),
                 NewsSource: formData.get('NewsSource'),
                 CategoryId: formData.get('CategoryId') ? parseInt(formData.get('CategoryId')) : null,
-                NewsStatus: formData.get('NewsStatus') === 'on',
-                SelectedTags: selectedTags
+                NewsStatus: document.getElementById('newsStatus').checked, 
+                SelectedTags: selectedTags 
             };
+
+            console.log('Sending data:', data); 
 
             try {
                 showLoading();
