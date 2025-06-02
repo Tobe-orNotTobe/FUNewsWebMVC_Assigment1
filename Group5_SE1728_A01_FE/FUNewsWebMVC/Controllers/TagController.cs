@@ -58,7 +58,10 @@ namespace FUNewsWebMVC.Controllers
 			}
 		}
 
-		public async Task<IActionResult> Details(int id)
+		// Updated TagController methods - fix create tag error
+
+		[HttpGet]
+		public async Task<IActionResult> Create()
 		{
 			if (!IsStaffOrAdmin())
 			{
@@ -67,31 +70,15 @@ namespace FUNewsWebMVC.Controllers
 
 			try
 			{
-				var tag = await _tagService.GetTagByIdAsync(id);
-				if (tag == null)
-				{
-					TempData["Error"] = "Tag not found.";
-					return RedirectToAction(nameof(Index));
-				}
-				return View(tag);
+				ViewBag.Action = "Create";
+				var model = new Tag();
+				return PartialView("_TagForm", model);
 			}
 			catch (Exception ex)
 			{
-				_logger.LogError(ex, $"Error loading tag details for ID: {id}");
-				TempData["Error"] = "Failed to load tag details.";
-				return RedirectToAction(nameof(Index));
+				_logger.LogError(ex, "Error loading create form");
+				return PartialView("_TagForm", new Tag());
 			}
-		}
-
-		[HttpGet]
-		public IActionResult Create()
-		{
-			if (!IsStaffOrAdmin())
-			{
-				return Forbid();
-			}
-
-			return View(new Tag());
 		}
 
 		[HttpPost]
@@ -100,36 +87,44 @@ namespace FUNewsWebMVC.Controllers
 		{
 			if (!IsStaffOrAdmin())
 			{
-				return Forbid();
-			}
-
-			if (!ModelState.IsValid)
-			{
-				return View(tag);
+				return Json(new { success = false, message = "Access denied." });
 			}
 
 			try
 			{
-				_logger.LogInformation($"Creating tag: {tag.TagName}");
-
-				var success = await _tagService.CreateTagAsync(tag);
-				if (success)
-				{
-					TempData["Success"] = "Tag created successfully!";
-					return RedirectToAction(nameof(Index));
-				}
-				else
-				{
-					ModelState.AddModelError("", "Failed to create tag. Please try again.");
-					return View(tag);
-				}
+				var existingTags = await _tagService.GetTagsAsync();
+				var maxId = existingTags.Any() ? existingTags.Max(t => t.TagId) : 0;
+				tag.TagId = maxId + 1;
 			}
 			catch (Exception ex)
 			{
-				_logger.LogError(ex, "Error creating tag");
-				ModelState.AddModelError("", $"Error creating tag: {ex.Message}");
-				return View(tag);
+				_logger.LogError(ex, "Error getting max tag ID");
+				return Json(new { success = false, message = "Failed to generate tag ID." });
 			}
+
+			if (ModelState.IsValid)
+			{
+				try
+				{
+					var success = await _tagService.CreateTagAsync(tag);
+					if (success)
+					{
+						return Json(new { success = true });
+					}
+					else
+					{
+						return Json(new { success = false, message = "Failed to create tag." });
+					}
+				}
+				catch (Exception ex)
+				{
+					_logger.LogError(ex, "Error creating tag");
+					return Json(new { success = false, message = ex.Message });
+				}
+			}
+
+			ViewBag.Action = "Create";
+			return PartialView("_TagForm", tag);
 		}
 
 		[HttpGet]
@@ -145,226 +140,88 @@ namespace FUNewsWebMVC.Controllers
 				var tag = await _tagService.GetTagByIdAsync(id);
 				if (tag == null)
 				{
-					TempData["Error"] = "Tag not found.";
-					return RedirectToAction(nameof(Index));
+					return NotFound("Tag not found.");
 				}
-				return View(tag);
+
+				ViewBag.Action = "Edit";
+				return PartialView("_TagForm", tag);
 			}
 			catch (Exception ex)
 			{
 				_logger.LogError(ex, $"Error loading tag for edit: {id}");
-				TempData["Error"] = "Failed to load tag for editing.";
-				return RedirectToAction(nameof(Index));
+				return BadRequest("Failed to load tag for editing.");
 			}
 		}
 
 		[HttpPost]
 		[ValidateAntiForgeryToken]
-		public async Task<IActionResult> Edit(int id, Tag tag)
+		public async Task<IActionResult> Edit(Tag tag)
 		{
 			if (!IsStaffOrAdmin())
 			{
-				return Forbid();
+				return Json(new { success = false, message = "Access denied." });
 			}
 
-			if (id != tag.TagId)
+			if (ModelState.IsValid)
 			{
-				TempData["Error"] = "Tag ID mismatch.";
-				return RedirectToAction(nameof(Index));
-			}
-
-			if (!ModelState.IsValid)
-			{
-				return View(tag);
-			}
-
-			try
-			{
-				_logger.LogInformation($"Updating tag: {tag.TagId}");
-
-				var success = await _tagService.UpdateTagAsync(tag);
-				if (success)
+				try
 				{
-					TempData["Success"] = "Tag updated successfully!";
-					return RedirectToAction(nameof(Index));
+					var success = await _tagService.UpdateTagAsync(tag);
+					if (success)
+					{
+						return Json(new { success = true });
+					}
+					else
+					{
+						return Json(new { success = false, message = "Failed to update tag." });
+					}
 				}
-				else
+				catch (Exception ex)
 				{
-					ModelState.AddModelError("", "Failed to update tag. Please try again.");
-					return View(tag);
+					_logger.LogError(ex, "Error updating tag");
+					return Json(new { success = false, message = ex.Message });
 				}
 			}
-			catch (Exception ex)
-			{
-				_logger.LogError(ex, $"Error updating tag: {tag.TagId}");
-				ModelState.AddModelError("", $"Error updating tag: {ex.Message}");
-				return View(tag);
-			}
+
+			ViewBag.Action = "Edit";
+			return PartialView("_TagForm", tag);
 		}
 
-		[HttpGet]
-		public async Task<IActionResult> Delete(int id)
-		{
-			if (!IsStaffOrAdmin())
-			{
-				return Forbid();
-			}
-
-			try
-			{
-				var tag = await _tagService.GetTagByIdAsync(id);
-				if (tag == null)
-				{
-					TempData["Error"] = "Tag not found.";
-					return RedirectToAction(nameof(Index));
-				}
-				return View(tag);
-			}
-			catch (Exception ex)
-			{
-				_logger.LogError(ex, $"Error loading tag for delete: {id}");
-				TempData["Error"] = "Failed to load tag for deletion.";
-				return RedirectToAction(nameof(Index));
-			}
-		}
-
-		[HttpPost, ActionName("Delete")]
-		[ValidateAntiForgeryToken]
+		[HttpPost]
 		public async Task<IActionResult> DeleteConfirmed(int id)
 		{
 			if (!IsStaffOrAdmin())
 			{
-				return Forbid();
+				return Json(new { success = false, message = "Access denied." });
 			}
 
 			try
 			{
-				_logger.LogInformation($"Deleting tag: {id}");
+				_logger.LogInformation($"Attempting to delete tag: {id}");
+
+				// Get the tag first to check if it exists
+				var tag = await _tagService.GetTagByIdAsync(id);
+				if (tag == null)
+				{
+					return Json(new { success = false, message = "Tag not found." });
+				}
 
 				var success = await _tagService.DeleteTagAsync(id);
 				if (success)
 				{
-					TempData["Success"] = "Tag deleted successfully!";
+					_logger.LogInformation($"Successfully deleted tag: {id}");
+					return Json(new { success = true, message = "Tag deleted successfully. All article associations have been removed." });
 				}
 				else
 				{
-					TempData["Error"] = "Failed to delete tag. It may be associated with news articles.";
+					_logger.LogWarning($"Failed to delete tag: {id}");
+					return Json(new { success = false, message = "Failed to delete tag." });
 				}
 			}
 			catch (Exception ex)
 			{
 				_logger.LogError(ex, $"Error deleting tag: {id}");
-				TempData["Error"] = $"Error deleting tag: {ex.Message}";
-			}
-
-			return RedirectToAction(nameof(Index));
-		}
-
-		[HttpPost]
-		public async Task<IActionResult> CreateModal([FromBody] Tag tag)
-		{
-			if (!IsStaffOrAdmin())
-			{
-				return Json(new { success = false, message = "Access denied" });
-			}
-
-			if (!ModelState.IsValid)
-			{
-				return Json(new
-				{
-					success = false,
-					message = "Invalid data",
-					errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage)
-				});
-			}
-
-			try
-			{
-				var success = await _tagService.CreateTagAsync(tag);
-				if (success)
-				{
-					return Json(new { success = true, message = "Tag created successfully!" });
-				}
-				else
-				{
-					return Json(new { success = false, message = "Failed to create tag" });
-				}
-			}
-			catch (Exception ex)
-			{
-				_logger.LogError(ex, "Error creating tag via modal");
-				return Json(new { success = false, message = ex.Message });
-			}
-		}
-
-		[HttpPost]
-		public async Task<IActionResult> EditModal([FromBody] Tag tag)
-		{
-			if (!IsStaffOrAdmin())
-			{
-				return Json(new { success = false, message = "Access denied" });
-			}
-
-			if (!ModelState.IsValid)
-			{
-				return Json(new
-				{
-					success = false,
-					message = "Invalid data",
-					errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage)
-				});
-			}
-
-			try
-			{
-				var success = await _tagService.UpdateTagAsync(tag);
-				if (success)
-				{
-					return Json(new { success = true, message = "Tag updated successfully!" });
-				}
-				else
-				{
-					return Json(new { success = false, message = "Failed to update tag" });
-				}
-			}
-			catch (Exception ex)
-			{
-				_logger.LogError(ex, "Error updating tag via modal");
-				return Json(new { success = false, message = ex.Message });
-			}
-		}
-
-		[HttpGet]
-		public async Task<IActionResult> GetTagData(int id)
-		{
-			if (!IsStaffOrAdmin())
-			{
-				return Json(new { success = false, message = "Access denied" });
-			}
-
-			try
-			{
-				var tag = await _tagService.GetTagByIdAsync(id);
-				if (tag == null)
-				{
-					return Json(new { success = false, message = "Tag not found" });
-				}
-
-				return Json(new
-				{
-					success = true,
-					data = new
-					{
-						tagId = tag.TagId,
-						tagName = tag.TagName,
-						note = tag.Note
-					}
-				});
-			}
-			catch (Exception ex)
-			{
-				_logger.LogError(ex, $"Error getting tag data for ID: {id}");
-				return Json(new { success = false, message = "Failed to load tag data" });
+				return Json(new { success = false, message = $"Error deleting tag: {ex.Message}" });
 			}
 		}
 	}

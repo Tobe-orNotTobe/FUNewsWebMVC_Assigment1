@@ -1,0 +1,193 @@
+﻿@model Tag
+
+<div class="container-fluid">
+    <!-- Tag Header -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <h3 class="mb-2 text-primary">
+                        <span class="badge bg-primary fs-4">#@Model.TagName</span>
+                    </h3>
+                    <p class="lead text-muted mb-0">Tag Information</p>
+                </div>
+                <div>
+                    <span class="badge bg-success fs-6">Active</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tag Metadata -->
+        <div class="card-body border-bottom bg-light">
+            <div class="row text-muted small">
+                <div class="col-md-6">
+                    <p class="mb-2">
+                        <i class="fas fa-hashtag me-2"></i>
+                        <strong>Tag ID:</strong>
+                        <code>@Model.TagId</code>
+                    </p>
+                    <p class="mb-2">
+                        <i class="fas fa-tag me-2"></i>
+                        <strong>Tag Name:</strong>
+                        @Model.TagName
+                    </p>
+                    <p class="mb-2">
+                        <i class="fas fa-newspaper me-2"></i>
+                        <strong>Used in Articles:</strong>
+                        <span class="badge bg-info">0</span>
+                    </p>
+                </div>
+                <div class="col-md-6">
+                    <p class="mb-2">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Status:</strong>
+                        <span class="badge bg-success">Active</span>
+                    </p>
+                    <p class="mb-2">
+                        <i class="fas fa-clock me-2"></i>
+                        <strong>Created:</strong>
+                        <span class="text-muted">Not available</span>
+                    </p>
+                    <p class="mb-2">
+                        <i class="fas fa-chart-bar me-2"></i>
+                        <strong>Usage Frequency:</strong>
+                        <span class="text-muted">Low</span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Tag Statistics -->
+            <div class="mt-3 pt-3 border-top">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <div class="h5 mb-0 text-primary">@(Model.TagName?.Length ?? 0)</div>
+                            <small class="text-muted">Characters</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <div class="h5 mb-0 text-info">0</div>
+                            <small class="text-muted">Articles</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <div class="h5 mb-0 text-success">@(string.IsNullOrEmpty(Model.Note) ? 0 : 1)</div>
+                            <small class="text-muted">Has Note</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <div class="h5 mb-0 text-warning">
+                                @(Model.TagName?.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length ?? 0)
+                            </div>
+                            <small class="text-muted">Words</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tag Note/Description -->
+        <div class="card-body">
+            <h6 class="text-muted mb-3">
+                <i class="fas fa-sticky-note me-2"></i>
+                Description/Note
+            </h6>
+            <div class="tag-note" style="line-height: 1.8; font-size: 1.05rem;">
+                @if (!string.IsNullOrEmpty(Model.Note))
+                {
+                    @Html.Raw(Model.Note.Replace("\n", "<br/>"))
+                }
+                else
+                {
+                    <div class="text-center py-4">
+                        <i class="fas fa-sticky-note fa-2x text-muted mb-3"></i>
+                        <p class="text-muted fst-italic">No description available for this tag.</p>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Related Articles Section -->
+        <div class="card-body border-top">
+            <h6 class="text-muted mb-3">
+                <i class="fas fa-newspaper me-2"></i>
+                Related Articles
+            </h6>
+            <div class="text-center py-4">
+                <i class="fas fa-newspaper fa-2x text-muted mb-3"></i>
+                <p class="text-muted">No articles are currently using this tag.</p>
+                <small class="text-muted">Articles tagged with this will appear here.</small>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="card-footer">
+            <div class="d-flex justify-content-center gap-2">
+                <button type="button" class="btn btn-warning open-edit-modal-from-detail"
+                        data-url="@Url.Action("Edit", new { id = Model.TagId })">
+                    <i class="fas fa-edit me-1"></i>Edit Tag
+                </button>
+                <button type="button" class="btn btn-danger btn-delete-from-detail"
+                        data-id="@Model.TagId" data-name="@Model.TagName">
+                    <i class="fas fa-trash me-1"></i>Delete
+                </button>
+                <button type="button" class="btn btn-outline-info" onclick="copyTagInfo()">
+                    <i class="fas fa-copy me-1"></i>Copy Info
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Handle edit button from detail modal
+    $(document).on('click', '.open-edit-modal-from-detail', function () {
+        const url = $(this).data('url');
+        $('#detailModal').modal('hide');
+
+        setTimeout(() => {
+            $.get(url, function (data) {
+                $('#modalBody').html(data);
+                $('#tagModalLabel').text('Edit Tag');
+                $('#tagModal').modal('show');
+            });
+        }, 300);
+    });
+
+    // Handle delete button from detail modal
+    $(document).on('click', '.btn-delete-from-detail', function () {
+        const tagId = $(this).data('id');
+        const tagName = $(this).data('name');
+        $('#deleteTagId').val(tagId);
+        $('#deleteTagName').text(tagName);
+
+        $('#detailModal').modal('hide');
+        setTimeout(() => {
+            const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+            modal.show();
+        }, 300);
+    });
+
+    // Copy tag information
+    function copyTagInfo() {
+        const tagId = '@Model.TagId';
+        const tagName = '@Model.TagName';
+        const tagInfo = `Tag: #${tagName} (ID: ${tagId})`;
+
+        navigator.clipboard.writeText(tagInfo).then(function() {
+            showAlert('info', 'Tag information copied to clipboard!');
+        }).catch(function() {
+            // Fallback for older browsers
+            const textArea = document.createElement('textarea');
+            textArea.value = tagInfo;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            showAlert('info', 'Tag information copied to clipboard!');
+        });
+    }
+</script>

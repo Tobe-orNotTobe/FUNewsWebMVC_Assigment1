@@ -1,0 +1,93 @@
+﻿@model FUNewsWebMVC.Models.Tag
+
+@Html.AntiForgeryToken()
+
+<form id="tagForm" asp-action="@ViewBag.Action" method="post">
+    @if (Model.TagId != 0)
+    {
+        <input type="hidden" asp-for="TagId" />
+    }
+
+    <div class="form-group mb-3">
+        <label asp-for="TagName" class="form-label">Tag Name *</label>
+        <input asp-for="TagName" class="form-control" maxlength="50" required
+               placeholder="Enter tag name..." />
+        <span asp-validation-for="TagName" class="text-danger"></span>
+        <div class="form-text">Tag names should be descriptive and concise (max 50 characters)</div>
+    </div>
+
+    <div class="form-group mb-3">
+        <label asp-for="Note" class="form-label">Note</label>
+        <textarea asp-for="Note" class="form-control" rows="3" maxlength="400"
+                  placeholder="Optional note or description for this tag..."></textarea>
+        <span asp-validation-for="Note" class="text-danger"></span>
+        <div class="form-text">Optional description or note about this tag (max 400 characters)</div>
+    </div>
+
+    @if (Model.TagId != 0)
+    {
+        <!-- Tag Metadata for Edit -->
+        <div class="row mt-4 pt-3 border-top bg-light rounded p-3">
+            <div class="col-md-12">
+                <div class="mb-2">
+                    <strong>Tag ID:</strong>
+                    <code>@Model.TagId</code>
+                </div>
+            </div>
+        </div>
+    }
+</form>
+
+<script>
+    // Scoped to modal only - prevent affecting table
+    $(document).ready(function() {
+        // Character counter for content fields (scoped to modal)
+        function addCharacterCounter(selector, maxLength) {
+            const element = $('#tagModal').find(selector);
+            if (element.length > 0) {
+                const counter = $('<div class="text-muted small mt-1"></div>');
+                element.parent().append(counter);
+
+                function updateCounter() {
+                    const remaining = maxLength - element.val().length;
+                    counter.text(`${remaining} characters remaining`);
+                    counter.removeClass('text-warning text-danger').addClass('text-muted');
+
+                    if (remaining < 10) {
+                        counter.removeClass('text-muted').addClass('text-warning');
+                    }
+                    if (remaining < 5) {
+                        counter.removeClass('text-warning').addClass('text-danger');
+                    }
+                }
+
+                element.on('input', updateCounter);
+                updateCounter();
+            }
+        }
+
+        // Add counters to text fields (only in modal)
+        addCharacterCounter('#TagName', 50);
+        addCharacterCounter('#Note', 400);
+
+        // Form validation (scoped to modal)
+        $('#tagModal').on('submit', '#tagForm', function(e) {
+            let isValid = true;
+            const modalContext = $('#tagModal');
+
+            const tagNameField = modalContext.find('#TagName');
+            if (!tagNameField.val().trim()) {
+                isValid = false;
+                tagNameField.addClass('is-invalid');
+            } else {
+                tagNameField.removeClass('is-invalid');
+            }
+
+            if (!isValid) {
+                e.preventDefault();
+                showAlert('warning', 'Please fill in all required fields.');
+                return false;
+            }
+        });
+    });
+</script>
