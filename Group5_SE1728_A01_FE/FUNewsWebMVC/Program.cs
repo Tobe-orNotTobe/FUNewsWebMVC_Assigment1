@@ -19,7 +19,9 @@ builder.Services.AddHttpClient("ApiClient", client =>
 builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddScoped<IAuthService, AuthService>();
-builder.Services.AddScoped<IReportService, ReportService>();
+//builder.Services.AddScoped<IReportService, ReportService>();
+builder.Services.AddScoped<ICategoryService, CategoryService>();
+builder.Services.AddScoped<ISystemAccountService, SystemAccountService>();
 
 var app = builder.Build();
 

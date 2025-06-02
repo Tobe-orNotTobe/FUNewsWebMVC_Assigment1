@@ -1,19 +1,176 @@
-﻿@model List<Category>
+﻿@using FUNewsWebMVC.ViewModels
+@model CategoryListViewModel
 
-<table class="table">
+<button type="button" class="btn btn-success mb-3" id="createBtn">
+    Create New Category
+</button>
+
+<form asp-action="Index" method="get" class="mb-3 d-flex">
+    <input type="text" name="searchTerm" class="form-control me-2" placeholder="Search categories..."
+           value="@Model.SearchTerm" />
+    <button type="submit" class="btn btn-primary">Search</button>
+</form>
+
+
+<table class="table table-striped">
     <thead>
         <tr>
             <th>ID</th>
             <th>Tên danh mục</th>
+            <th>Mô tả</th>
+            <th></th>
+            <th></th>
         </tr>
     </thead>
     <tbody>
-        @foreach (var item in Model)
+        @foreach (var item in Model.Categories)
         {
             <tr>
                 <td>@item.CategoryId</td>
                 <td>@item.CategoryName</td>
+                <td>@item.CategoryDesciption</td>
+                <td>
+                    
+                    <a href="javascript:void(0)" class="btn btn-link open-modal" data-url="@Url.Action("Edit", new { id = item.CategoryId })">Edit</a> |
+                    <button type="button"
+                            class="btn btn-danger btn-delete"
+                            data-id="@item.CategoryId"
+                            data-name="@item.CategoryName">
+                        Delete
+                    </button>
+
+                </td>
             </tr>
         }
     </tbody>
 </table>
+
+<!-- Modal -->
+<div class="modal fade" id="categoryModal" tabindex="-1" role="dialog" aria-labelledby="categoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="categoryModalLabel">Category</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Partial view loads here -->
+            </div>
+            <div class="modal-footer">
+                <button type="submit" form="categoryForm" class="btn btn-primary">Save</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Deletion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete <strong id="deleteCategoryName"></strong>?
+                <input type="hidden" id="deleteCategoryId" />
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" id="confirmDeleteBtn" class="btn btn-danger">Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div>
+    <ul class="pagination">
+        @for (var i = 1; i <= Model.TotalPages; i++)
+        {
+            <li class="page-item @(i == Model.PageIndex ? "active" : "")">
+                <a class="page-link"
+                   asp-action="Index"
+                   asp-route-pageIndex="@i"
+                   asp-route-searchTerm="@Model.SearchTerm">@i</a>
+            </li>
+        }
+    </ul>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // Open Create modal
+            $('#createBtn').click(function () {
+                $.get('@Url.Action("Create")', function (data) {
+                    $('#modalBody').html(data);
+                    $('#categoryModal').modal('show');
+                });
+            });
+
+            // Open Details/Edit modal
+            $(document).on('click', '.open-modal', function () {
+                const url = $(this).data('url');
+                $.get(url, function (data) {
+                    $('#modalBody').html(data);
+                    $('#categoryModal').modal('show');
+                });
+            });
+
+            // Handle delete button click (delegated binding)
+            $(document).on('click', '.btn-delete', function () {
+                const categoryId = $(this).data('id');
+                const categoryName = $(this).data('name');
+                $('#deleteCategoryId').val(categoryId);
+                $('#deleteCategoryName').text(categoryName);
+                const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+                modal.show();
+            });
+
+            // Handle confirm delete
+            $('#confirmDeleteBtn').click(function () {
+                const id = $('#deleteCategoryId').val();
+                $.ajax({
+                    url: '/Category/DeleteConfirmed/' + id,
+                    type: 'POST',
+                    success: function (response) {
+                        if (response.success) {
+                            $('#deleteModal').modal('hide');
+                            location.reload(); // Or remove the row via JS
+                        } else {
+                            alert("Delete failed.");
+                        }
+                    },
+                    error: function () {
+                        alert("Error deleting category.");
+                    }
+                });
+            });
+
+            // Handle form submission inside modal (Create/Edit)
+            $(document).on('submit', '#categoryForm', function (e) {
+                e.preventDefault();
+                var form = $(this);
+
+                $.ajax({
+                    type: form.attr('method'),
+                    url: form.attr('action'),
+                    data: form.serialize(),
+                    success: function (response) {
+                        if (response.success) {
+                            $('#categoryModal').modal('hide');
+                            location.reload(); // or update the table dynamically
+                        } else {
+                            $('#modalBody').html(response); // Show validation errors
+                        }
+                    },
+                    error: function () {
+                        alert('An error occurred while saving the category.');
+                    }
+                });
+            });
+        });
+    </script>
+}

@@ -1,1 +1,181 @@
-﻿
+﻿@model FUNewsWebMVC.ViewModels.SystemAccountListViewModel
+
+@{
+    ViewData["Title"] = "System Accounts";
+}
+
+<h2>System Accounts</h2>
+
+<!-- Create Button -->
+<button type="button" class="btn btn-success mb-3" id="createBtn">
+    Create New Account
+</button>
+
+<form asp-action="Index" method="get" class="mb-3 d-flex">
+    <input type="text" name="searchTerm" class="form-control me-2" placeholder="Search categories..."
+           value="@Model.SearchTerm" />
+    <button type="submit" class="btn btn-primary">Search</button>
+</form>
+
+<!-- Table -->
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Account Name</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var acc in Model.Accounts)
+        {
+            <tr>
+                <td>@acc.AccountId</td>
+                <td>@acc.AccountName</td>
+                <td>@acc.AccountEmail</td>
+                <td>@acc.AccountRole</td>
+                <td>
+                    <a href="javascript:void(0)" class="btn btn-link open-modal" data-url="@Url.Action("Edit", new { id = acc.AccountId })">Edit</a>
+                    <button type="button" class="btn btn-danger btn-delete" data-id="@acc.AccountId" data-name="@acc.AccountName">Delete</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<!-- Pagination -->
+<div>
+    <ul class="pagination">
+        @for (var i = 1; i <= Model.TotalPages; i++)
+        {
+            <li class="page-item @(i == Model.PageIndex ? "active" : "")">
+                <a class="page-link"
+                   asp-action="Index"
+                   asp-route-pageIndex="@i"
+                   asp-route-searchTerm="@Model.SearchTerm">@i</a>
+            </li>
+        }
+    </ul>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="accountModal" tabindex="-1" role="dialog" aria-labelledby="accountModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="accountModalLabel">Account</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Partial view loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-primary" form="accountForm">Save</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Optional Delete Modal (if using) -->
+<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete <strong id="deleteaccountName"></strong>?
+                <input type="hidden" id="deleteaccountId" />
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Delete</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            // Create modal open
+            $('#createBtn').click(function () {
+                $.get('@Url.Action("Create")', function (data) {
+                    $('#modalBody').html(data);
+                    $('#accountModal').modal('show');
+                });
+            });
+
+            // Edit modal open
+            $(document).on('click', '.open-modal', function () {
+                const url = $(this).data('url');
+                $.get(url, function (data) {
+                    $('#modalBody').html(data);
+                    $('#accountModal').modal('show');
+                });
+            });
+
+            // Delete modal open
+            $(document).on('click', '.btn-delete', function () {
+                const id = $(this).data('id');
+                const name = $(this).data('name');
+                $('#deleteaccountId').val(id);
+                $('#deleteaccountName').text(name);
+                const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+                modal.show();
+            });
+
+            // Confirm delete
+            $('#confirmDeleteBtn').click(function () {
+                const id = $('#deleteaccountId').val();
+                $.ajax({
+                    url: '/Account/DeleteConfirmed/' + id,
+                    type: 'POST',
+                    success: function (response) {
+                        if (response.success) {
+                            $('#deleteModal').modal('hide');
+                            location.reload();
+                        } else {
+                            alert("Delete failed.");
+                        }
+                    },
+                    error: function () {
+                        alert("Error deleting account.");
+                    }
+                });
+            });
+
+            // Submit Create/Edit form
+            $(document).on('submit', '#accountForm', function (e) {
+                e.preventDefault();
+                var form = $(this);
+                var data = {};
+                form.serializeArray().forEach(function (item) {
+                    data[item.name] = item.value;
+                });
+
+                $.ajax({
+                   type: form.attr('method'),
+                    url: form.attr('action'),
+                    data: form.serialize(),
+                    success: function (response) {
+                        if (response.success) {
+                            $('#accountModal').modal('hide');
+                            location.reload();
+                        } else {
+                            $('#modalBody').html(response); // show validation errors
+                        }
+                    },
+                    error: function () {
+                        alert('An error occurred.');
+                    }
+                });
+            });
+        });
+    </script>
+}

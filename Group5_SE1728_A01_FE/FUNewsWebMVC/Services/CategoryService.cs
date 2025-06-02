@@ -1,10 +1,11 @@
 ﻿using FUNewsWebMVC.Models;
+using FUNewsWebMVC.Services.Interfaces;
 using Newtonsoft.Json;
 
 namespace FUNewsWebMVC.Services
 {
-	public class CategoryService : BaseService
-	{
+	public class CategoryService : BaseService, ICategoryService
+    {
 		public CategoryService(IHttpClientFactory clientFactory, IHttpContextAccessor contextAccessor)
 			: base(clientFactory, contextAccessor) { }
 
@@ -18,5 +19,47 @@ namespace FUNewsWebMVC.Services
 			var result = JsonConvert.DeserializeObject<ODataResponse<Category>>(content);
 			return result.Value;
 		}
-	}
+        public async Task<Category> GetByIdAsync(int id)
+        {
+            var client = CreateAuthorizedClient();
+            var response = await client.GetAsync($"Categories/{id}");
+            response.EnsureSuccessStatusCode();
+
+            var content = await response.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<Category>(content);
+        }
+
+        public async Task AddAsync(Category category)
+        {
+            var client = CreateAuthorizedClient();
+            try
+            {
+                var response = await client.PostAsJsonAsync("Categories", category);
+                response.EnsureSuccessStatusCode();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("AddAsync failed: " + ex.Message);
+                throw;
+            }
+        }
+
+        public async Task UpdateAsync(Category category)
+        {
+            var client = CreateAuthorizedClient();
+            var response = await client.PutAsJsonAsync($"Categories/{category.CategoryId}", category);
+            response.EnsureSuccessStatusCode();
+        }
+
+        public async Task DeleteAsync(int id)
+        {
+            var client = CreateAuthorizedClient();
+            var response = await client.DeleteAsync($"Categories/{id}");
+            if (!response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                throw new Exception($"Delete failed: {response.StatusCode} - {content}");
+            }
+        }
+    }
 }
