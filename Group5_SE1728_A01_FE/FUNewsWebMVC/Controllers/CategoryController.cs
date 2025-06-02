@@ -23,26 +23,36 @@ namespace FUNewsWebMVC.Controllers
         public int PageIndex { get; set; } = 1;
         public int TotalPages => (int)Math.Ceiling((double)TotalCount / PageSize);
 
-        public async Task<IActionResult> Index(int pageIndex = 1)
+        public async Task<IActionResult> Index(string? searchTerm, int pageIndex = 1)
         {
             PageIndex = pageIndex;
             var categories = await _service.GetCategoriesAsync();
+
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+            {
+                categories = categories
+                    .Where(c => c.CategoryName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+            }
+
             TotalCount = categories.Count;
 
             var pagedCategories = categories
-                                .Skip((pageIndex - 1) * PageSize)
-                                .Take(PageSize)
-                                .ToList();
+                .Skip((pageIndex - 1) * PageSize)
+                .Take(PageSize)
+                .ToList();
 
             var model = new CategoryListViewModel
             {
                 Categories = pagedCategories,
                 PageIndex = pageIndex,
-                TotalPages = (int)Math.Ceiling((double)TotalCount / PageSize)
+                TotalPages = (int)Math.Ceiling((double)TotalCount / PageSize),
+                SearchTerm = searchTerm
             };
 
             return View(model);
         }
+
 
         [HttpGet]
         public async Task<IActionResult> Create()
