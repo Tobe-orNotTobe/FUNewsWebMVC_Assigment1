@@ -54,8 +54,12 @@ namespace FUNewsWebMVC.Services
         public async Task DeleteAsync(int id)
         {
             var client = CreateAuthorizedClient();
-            var response = await client.DeleteAsync($"Categories({id})"); 
-            response.EnsureSuccessStatusCode();
+            var response = await client.DeleteAsync($"Categories/{id}");
+            if (!response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                throw new Exception($"Delete failed: {response.StatusCode} - {content}");
+            }
         }
     }
 }

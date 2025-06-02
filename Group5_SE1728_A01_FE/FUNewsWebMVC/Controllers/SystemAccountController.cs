@@ -10,43 +10,33 @@ namespace FUNewsWebMVC.Controllers
     public class SystemAccountController : Controller
     {
         private readonly ISystemAccountService _service;
+        private const int PageSize = 3;
 
         public SystemAccountController(ISystemAccountService service)
         {
             _service = service;
         }
 
-        public int TotalCount { get; set; }
-        public int PageSize { get; set; } = 3;
-        public int PageIndex { get; set; } = 1;
-        public int TotalPages => (int)Math.Ceiling((double)TotalCount / PageSize);
-
         public async Task<IActionResult> Index(int pageIndex = 1)
         {
-            PageIndex = pageIndex;
             var accounts = await _service.GetAccountsAsync();
-            TotalCount = accounts.Count;
-
-            var pagedAccounts = accounts
-                                .Skip((pageIndex - 1) * PageSize)
-                                .Take(PageSize)
-                                .ToList();
+            var totalCount = accounts.Count;
 
             var model = new SystemAccountListViewModel
             {
-                Accounts = pagedAccounts,
                 PageIndex = pageIndex,
-                TotalPages = TotalPages
+                TotalPages = (int)Math.Ceiling((double)totalCount / PageSize),
+                Accounts = accounts.Skip((pageIndex - 1) * PageSize).Take(PageSize).ToList()
             };
 
             return View(model);
         }
 
         [HttpGet]
-        public async Task<IActionResult> Create()
+        public IActionResult Create()
         {
             ViewBag.Action = "Create";
-            return PartialView("_SystemAccountPartial", new SystemAccount());
+            return PartialView("_AccountForm", new SystemAccount());
         }
 
         [HttpPost]
@@ -57,17 +47,16 @@ namespace FUNewsWebMVC.Controllers
                 await _service.AddAsync(account);
                 return Json(new { success = true });
             }
-            return PartialView("_SystemAccountPartial", account);
+            ViewBag.Action = "Create";
+            return PartialView("_AccountForm", account);
+
         }
 
         [HttpGet]
-        public async Task<IActionResult> Edit(short id)
+        public async Task<IActionResult> Edit(int id)
         {
             var account = await _service.GetByIdAsync(id);
-            if (account == null) return NotFound();
-
-            ViewBag.Action = "Edit";
-            return PartialView("_SystemAccountPartial", account);
+            return PartialView("_AccountForm", account);
         }
 
         [HttpPost]
@@ -78,19 +67,17 @@ namespace FUNewsWebMVC.Controllers
                 await _service.UpdateAsync(account);
                 return Json(new { success = true });
             }
-            return PartialView("_SystemAccountPartial", account);
+            return PartialView("_AccountForm", account);
         }
 
-        public async Task<IActionResult> Detail(short id)
+        public async Task<IActionResult> Delete(int id)
         {
             var account = await _service.GetByIdAsync(id);
-            if (account == null) return NotFound();
-
             return View(account);
         }
 
         [HttpPost]
-        public async Task<IActionResult> DeleteConfirmed(short id)
+        public async Task<IActionResult> DeleteConfirmed(int id)
         {
             await _service.DeleteAsync(id);
             return Json(new { success = true });

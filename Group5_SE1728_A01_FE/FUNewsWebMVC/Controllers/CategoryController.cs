@@ -95,6 +95,12 @@ namespace FUNewsWebMVC.Controllers
             return View(category);
         }
 
+        public async Task<IActionResult> Delete(int id)
+        {
+            var category = await _service.GetByIdAsync(id);
+            if (category == null) return NotFound();
+            return View(category);
+        }
 
         [HttpPost]
         public async Task<IActionResult> DeleteConfirmed(int id)

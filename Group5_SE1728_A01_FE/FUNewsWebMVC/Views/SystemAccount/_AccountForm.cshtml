@@ -3,10 +3,6 @@
 @Html.AntiForgeryToken()
 
 <form id="accountForm" asp-action="@ViewBag.Action" method="post">
-    @if (Model.AccountId != 0)
-    {
-        <input type="hidden" asp-for="AccountId" />
-    }
 
     <div class="form-group">
         <label asp-for="AccountName"></label>
@@ -21,14 +17,19 @@
     </div>
 
     <div class="form-group">
-        <label asp-for="AccountRole"></label>
-        <input asp-for="AccountRole" type="number" class="form-control" />
-        <span asp-validation-for="AccountRole" class="text-danger"></span>
+        <label asp-for="AccountPassword"></label>
+        <input asp-for="AccountPassword" class="form-control" type="password" />
+        <span asp-validation-for="AccountPassword" class="text-danger"></span>
     </div>
 
     <div class="form-group">
-        <label asp-for="AccountPassword"></label>
-        <input asp-for="AccountPassword" type="password" class="form-control" autocomplete="new-password" />
-        <span asp-validation-for="AccountPassword" class="text-danger"></span>
+        <label asp-for="AccountRole"></label>
+        <select asp-for="AccountRole" class="form-control">
+            <option value="">-- Select Role --</option>
+            <option value="1">Staff</option>
+            <option value="2">Lecturer</option>
+        </select>
+        <span asp-validation-for="AccountRole" class="text-danger"></span>
     </div>
 </form>
+

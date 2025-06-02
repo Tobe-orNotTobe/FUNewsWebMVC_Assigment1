@@ -12,7 +12,9 @@
         <tr>
             <th>ID</th>
             <th>Tên danh mục</th>
-            <th>Action</th>
+            <th>Mô tả</th>
+            <th></th>
+            <th></th>
         </tr>
     </thead>
     <tbody>
@@ -21,8 +23,9 @@
             <tr>
                 <td>@item.CategoryId</td>
                 <td>@item.CategoryName</td>
+                <td>@item.CategoryDesciption</td>
                 <td>
-                    <a href="javascript:void(0)" class="btn btn-link open-modal" data-url="@Url.Action("Detail", new { id = item.CategoryId })">Details</a> |
+                    
                     <a href="javascript:void(0)" class="btn btn-link open-modal" data-url="@Url.Action("Edit", new { id = item.CategoryId })">Edit</a> |
                     <button type="button"
                             class="btn btn-danger btn-delete"
